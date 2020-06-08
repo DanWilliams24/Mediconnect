@@ -1,0 +1,19 @@
+{
+  "name": "mediconnect",
+  "version": "1.0.0",
+  "description": "SMS Chat Bot to support BLM Protests",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DanWilliams24/Mediconnect.git"
+  },
+  "author": "Daniel Williams",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DanWilliams24/Mediconnect/issues"
+  },
+  "homepage": "https://github.com/DanWilliams24/Mediconnect#readme"
+}
