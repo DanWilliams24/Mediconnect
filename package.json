@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/DanWilliams24/Mediconnect/issues"
   },
-  "homepage": "https://github.com/DanWilliams24/Mediconnect#readme"
+  "homepage": "https://github.com/DanWilliams24/Mediconnect#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "twilio": "^3.45.0"
+  }
 }
