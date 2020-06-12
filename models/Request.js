@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
 
 const RequestSchema = new mongoose.Schema({
-    _id: Number,
-    phone: String,
+    phone: {type: String, required: true},
     location: String,
     medic: {
         type: mongoose.Types.ObjectId,

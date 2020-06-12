@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 
 const MedicSchema = new mongoose.Schema({
-    _id: Number,
-    phone:String,
+    phone:{type: String, required: true},
     available: Boolean,
     unsubscribed: [{
         type: mongoose.Schema.Types.ObjectId,
