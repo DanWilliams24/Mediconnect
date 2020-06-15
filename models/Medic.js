@@ -7,7 +7,13 @@ const MedicSchema = new mongoose.Schema({
     unsubscribed: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Request'
-    }]
+    }],
+    progress: Number,
+    complete: {
+        type:Boolean,
+        default: false
+    }
+
 })
 
 const Medic = mongoose.model('Medic', MedicSchema);

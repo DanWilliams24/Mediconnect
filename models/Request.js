@@ -14,6 +14,10 @@ const RequestSchema = new mongoose.Schema({
         type: String,
         enum: ['open','accepted','fufilled','unfufilled'],
         default: 'open'
+    },
+    complete: {
+        type:Boolean,
+        default: false
     }
 })
 
