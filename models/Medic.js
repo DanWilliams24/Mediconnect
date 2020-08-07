@@ -4,16 +4,13 @@ const mongoose = require('mongoose');
 const MedicSchema = new mongoose.Schema({
     phone:{type: String, required: true},
     available: Boolean,
-    unsubscribed: [{
+    unsubscribed: [{ //This field contains a list of requests to exclude from users feed
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Request'
     }],
-    progress: Number,
-    complete: {
-        type:Boolean,
-        default: false
-    }
-
+    resID: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Response' }
 })
 
 const Medic = mongoose.model('Medic', MedicSchema);

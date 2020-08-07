@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const RequestSchema = new mongoose.Schema({
     phone: {type: String, required: true},
+
     location: String,
     medic: {
         type: mongoose.Types.ObjectId,
@@ -12,7 +13,7 @@ const RequestSchema = new mongoose.Schema({
     nextNotification: Date,
     status: {
         type: String,
-        enum: ['open','accepted','fufilled','unfufilled'],
+        enum: ['open','accepted','fulfilled','unfulfilled'],
         default: 'open'
     },
     complete: {
@@ -21,5 +22,5 @@ const RequestSchema = new mongoose.Schema({
     }
 })
 
-const Request = mongoose.model('Request', RequestSchema)
-modules.exports = Request;
+const Request = mongoose.model('Request', RequestSchema);
+module.exports = Request;
