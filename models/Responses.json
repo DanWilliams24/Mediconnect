@@ -1,0 +1,16 @@
+{
+    "HELP":[
+        {"description":"Thanks for reaching out to mediconnect. Before we begin, please remember that if you require immediate medical attention for a severe injury, it’s best to survey your immediate surroundings by calling for a medic out-loud before using our service to avoid delay. Type ‘YES’ if you understand."},
+        {"description": "Great! Please type a short description of your location so that we can relay the information to the volunteer medics connected to mediconnect. Include street names and nearby landmarks for efficient identification. "},
+        {"description": "Thanks! We’re relaying this information to our volunteer medics. Once a medic accepts your call, you’ll be notified."},
+        {"description": "Medic %PLACEHOLDER% has accepted the call and is on the way. While you wait for the medic to arrive, you can text ‘MEDIC’ for information about medical and supply tents near you. We recommend that you ask by-standers if they have first-aid materials to start self-treating wounds or injuries before the medic arrives, as it may take a few minutes for them to find you. Text ‘COVID’ for reminders and information about how to stay safe while protesting during a pandemic. "}
+    ],
+    "MEDIC":[
+        {"description": "Hi medics! We have a case. Here’s the location description: %PLACEHOLDER%. If you’re nearby and are willing to help, please type “YES”. Else type “NO”." },
+        {"descripiton":"Thanks for responding. Remember to stay alert for future injury notifications."},
+        {"description": "We have a medic on the case! Thanks for responding. Remember to stay alert for future injury notifications."},
+        {"description": "Thanks! The protestor has been notified that you’re en-route."}
+    ]
+
+
+}
