@@ -4,6 +4,7 @@ const cg = require('../../config')
 //const Twilio = require('twilio')(cg.accountSid, cg.authToken);
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
 const User = require('../../models/User')
+const responseData = require('../../models/Responses.json')
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   function respond(message) {
@@ -18,7 +19,7 @@ router.get('/', function(req, res, next) {
     User.findOne({phone: req.query.From}, function (err, user){
       if(!user){
         //Create new user and push to DB. Note that ResID is not set so it can default to 0.
-        let newUser = new User({phone: req.query.From,isMedic: false, topic: 'HELP'})
+        let newUser = new User({phone: req.query.From,isMedic: false, topic: "HELP"})
         newUser.save(function (err, user){
           if(err) return console.error(err);
           console.log("NEW USER SUCCESSFULLY CREATED")
@@ -27,7 +28,7 @@ router.get('/', function(req, res, next) {
       }else{
         //This must be an existing person, but new conversation topic. 
         //Change topic and reset ResID for user
-        user.topic = 'HELP'
+        user.topic = "HELP"
         user.resID = 0
         user.save(function (err, user){
           if(err) return console.error(err);
@@ -52,7 +53,7 @@ router.get('/', function(req, res, next) {
     */
   }
 
-  if(req.query.isNew === 'true'){ //strict equality
+  if(req.query.isNew === "true"){ //strict equality
     console.log("New conversation started")
     newConversation()
   }else{

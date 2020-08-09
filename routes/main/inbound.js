@@ -37,12 +37,12 @@ router.get('/', function (req, res, next) {
     User.findOne({phone: req.body.From}, function (err, user){
       if(user){
         //existing phone number. Search existing data for state and redirect user. 
-        switch(user.topic){
-          case "help": redirect("/inbound/help", false)
+        switch(user.topic.toUpperCase()){
+          case "HELP": redirect("/inbound/help", false)
             break;
-          case "signup": redirect("/inbound/signup", false)
+          case "SIGNUP": redirect("/inbound/signup", false)
             break;
-          case "medic": redirect("/inbound/medic", false)
+          case "MEDIC": redirect("/inbound/medic", false)
             break;
           default: throw new Error("This is an impossible case as user should always have a topic.")
             break;
@@ -59,8 +59,9 @@ router.get('/', function (req, res, next) {
   var input = req.body.Body;
   console.log(phone)
   console.log(input)
+
   //Check input to see if it is a keyword
-  switch (input) {
+  switch (input.toUpperCase()) {
     case "HELP":
       console.log("HELP ME")
       redirect("/inbound/help",true);
