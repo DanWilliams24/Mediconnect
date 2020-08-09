@@ -1,13 +1,11 @@
 var express = require('express');
-const {
-  response
-} = require('../../app');
 var router = express.Router();
 const cg = require('../../config')
-const twilio = require('twilio')(cg.accountSid, cg.authToken);
-const Medics = require('../../models/Medic');
-const Requests = require('../../models/Request');
+const MessagingResponse = require('twilio').twiml.MessagingResponse;
+const User = require('../../models/User');
 const url = require('url')
+const { Topic } = require('../../models/User');
+const responseData = require('../../models/Responses.json');
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
@@ -21,12 +19,13 @@ router.get('/', function (req, res, next) {
   }
   
   //Redirects to other pages while preserving important data 
-  function redirect(pathname, isNew){
+  //Options: If starting a new convo, supply only true to isNew. Otherwise, supply user id to from field 
+  function redirect(pathname, options){
     //console.log("Req Query: " + req.body)
     const redirectQuery = {
-      "From": req.body.From,
+      "From": options.From || req.body.From,
       "Body": req.body.Body, 
-      "isNew": isNew 
+      "isNew": options.isNew || false 
     }
     res.redirect(url.format({pathname: pathname,query: redirectQuery}))
   }
@@ -37,12 +36,12 @@ router.get('/', function (req, res, next) {
     User.findOne({phone: req.body.From}, function (err, user){
       if(user){
         //existing phone number. Search existing data for state and redirect user. 
-        switch(user.topic.toUpperCase()){
-          case "HELP": redirect("/inbound/help", false)
+        switch(user.topic){
+          case Topic.Topics.Help: redirect("/inbound/help", {From: user.id})
             break;
-          case "SIGNUP": redirect("/inbound/signup", false)
+          case Topic.Topics.SignUp: redirect("/inbound/signup", {From: user.id})
             break;
-          case "MEDIC": redirect("/inbound/medic", false)
+          case Topic.Topics.Medic: redirect("/inbound/medic", {From: user.id})
             break;
           default: throw new Error("This is an impossible case as user should always have a topic.")
             break;
@@ -50,7 +49,7 @@ router.get('/', function (req, res, next) {
       } else {
         //new phone number, number has never been logged. They also did not use a keyword. 
         // This may be an invalid request, send them back a list of valid keywords.
-        respond("Hello! Unfortunately we were unable to understand what you said. Please text 'HELP' to get in contact with onsite medics or 'SIGNUP' to register as a onsite medic.")
+        respond(responseData.ERROR[0])
       }
     })
   }
@@ -64,22 +63,14 @@ router.get('/', function (req, res, next) {
   switch (input.toUpperCase()) {
     case "HELP":
       console.log("HELP ME")
-      redirect("/inbound/help",true);
+      redirect("/inbound/help",{isNew: true});
       break;
     case "SIGNUP":
       console.log("SIGN ME UP")
-      redirect("/inbound/signup", true);
+      redirect("/inbound/signup", {isNew: true});
       break;
     default: checkMongo(); //otherwise check mongo for phone and carry on conversation
   }
 });
-
-
-
-
-
-
-
-
 
 module.exports = router;

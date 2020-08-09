@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const Statuses = Object.freeze({
     Status: {
+        Incomplete: "incomplete",
         Open: "open",
         Accepted: "accepted",
         Fulfilled: "fulfilled",
@@ -10,7 +11,7 @@ const Statuses = Object.freeze({
   });
 
 const RequestSchema = new mongoose.Schema({
-    phone: {type: String, required: true},
+    user: {type: mongoose.Types.ObjectId, ref: 'User'},
 
     location: String,
     medic: {
@@ -23,11 +24,7 @@ const RequestSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: Object.values(Statuses["Status"]),
-        default: Statuses.Status.Open
-    },
-    complete: {
-        type:Boolean,
-        default: false
+        default: Statuses.Status.Incomplete
     }
 })
 
