@@ -37,7 +37,7 @@ router.get('/', function(req, res, next) {
         });
       }
       //Finally, end response by sending an initial message back to twilio to the user.
-      respond("Thanks for reaching out to mediconnect. Before we begin, please remember that if you require immediate medical attention for a severe injury, it’s best to survey your immediate surroundings by calling for a medic out-loud before using our service to avoid delay. Type ‘YES’ if you understand. ")
+      respond(responseData.HELP[user.resID])
     })
   }
 
@@ -51,6 +51,8 @@ router.get('/', function(req, res, next) {
     If not:
       1. Use response.json to send back the appropriate message
     */
+    
+
   }
 
   if(req.query.isNew === "true"){ //strict equality

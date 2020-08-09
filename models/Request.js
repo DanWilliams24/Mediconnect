@@ -31,7 +31,7 @@ const RequestSchema = new mongoose.Schema({
     }
 })
 
-Object.assign(RequestSchema.statics,{Status});
+Object.assign(RequestSchema.statics,{Statuses});
 
 const Request = mongoose.model('Request', RequestSchema);
 module.exports = Request;
