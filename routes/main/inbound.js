@@ -7,7 +7,7 @@ const cg = require('../../config')
 const twilio = require('twilio')(cg.accountSid, cg.authToken);
 const Medics = require('../../models/Medic');
 const Requests = require('../../models/Request');
-const { MessageInstance } = require('twilio/lib/rest/api/v2010/account/message');
+const url = require('url')
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
@@ -19,34 +19,30 @@ router.get('/', function (req, res, next) {
     res.writeHead(200, {'Content-Type': 'text/xml'});
     res.end(twiml.toString());
   }
-  var phone = req.body.From;
-  var input = req.body.Body;
-  console.log(phone)
-  console.log(input)
-  switch (input) {
-    case "HELP":
-      console.log("HELP ME")
-      res.redirect("/inbound/help");
-      break;
-    case "SIGNUP":
-      console.log("SIGN ME UP")
-      res.redirect("/inbound/signup");
-      break;
-    default: checkMongo();
+  
+  //Redirects to other pages while preserving important data 
+  function redirect(pathname, isNew){
+    //console.log("Req Query: " + req.body)
+    const redirectQuery = {
+      "From": req.body.From,
+      "Body": req.body.Body, 
+      "isNew": isNew 
+    }
+    res.redirect(url.format({pathname: pathname,query: redirectQuery}))
   }
 
   function checkMongo() {
     // Check if there are any responses for the current number in an incomplete
     // survey response
-    User.findOne({phone: phone}, function (err, user){
+    User.findOne({phone: req.body.From}, function (err, user){
       if(user){
         //existing phone number. Search existing data for state and redirect user. 
         switch(user.topic){
-          case "help": res.redirect("/inbound/help")
+          case "help": redirect("/inbound/help", false)
             break;
-          case "signup": res.redirect("/inbound/signup")
+          case "signup": redirect("/inbound/signup", false)
             break;
-          case "medic": res.redirect("/inbound/medic")
+          case "medic": redirect("/inbound/medic", false)
             break;
           default: throw new Error("This is an impossible case as user should always have a topic.")
             break;
@@ -57,46 +53,24 @@ router.get('/', function (req, res, next) {
         respond("Hello! Unfortunately we were unable to understand what you said. Please text 'HELP' to get in contact with onsite medics or 'SIGNUP' to register as a onsite medic.")
       }
     })
-
-
-    /*
-    Medics.findOne({phone: phone }, function (err, doc) {
-      if (doc) {
-        if (doc.complete) {
-          res.redirect("/currentMedics")
-        } else {
-          res.redirect("/medicSurvey")
-        }
-      } else {
-        Request.findOne({
-          phone: phone
-        }, function (err, doc) {
-          if (doc) {
-            if (doc.complete) {
-              res.redirect("/currentRequests")
-            } else {
-              res.redirect("/requestSurvey")
-            }
-          } else {
-            // After the first message, start processing input
-            respond("Hello! Unfortunately we were unable to understand what you said. Please text 'HELP' to get in contact with onsite medics or 'SIGNUP' to register as a onsite medic.")
-          }
-        });
-      }
-    });
-    */
   }
 
-
-
-
-
-
-  
-
-
-
-
+  var phone = req.body.From; 
+  var input = req.body.Body;
+  console.log(phone)
+  console.log(input)
+  //Check input to see if it is a keyword
+  switch (input) {
+    case "HELP":
+      console.log("HELP ME")
+      redirect("/inbound/help",true);
+      break;
+    case "SIGNUP":
+      console.log("SIGN ME UP")
+      redirect("/inbound/signup", true);
+      break;
+    default: checkMongo(); //otherwise check mongo for phone and carry on conversation
+  }
 });
 
 
