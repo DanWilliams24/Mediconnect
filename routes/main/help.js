@@ -19,7 +19,7 @@ router.get('/', function(req, res, next) {
     User.findOne({phone: req.query.From}, function (err, user){
       if(!user){
         //Create new user and push to DB. Note that ResID is not set so it can default to 0.
-        let newUser = new User({phone: req.query.From,isMedic: false, topic: "HELP"})
+        let newUser = new User({phone: req.query.From,isMedic: false, topic: User.Topic.Help})
         newUser.save(function (err, user){
           if(err) return console.error(err);
           console.log("NEW USER SUCCESSFULLY CREATED")
@@ -28,7 +28,7 @@ router.get('/', function(req, res, next) {
       }else{
         //This must be an existing person, but new conversation topic. 
         //Change topic and reset ResID for user
-        user.topic = "HELP"
+        user.topic = User.Topic.Help
         user.resID = 0
         user.save(function (err, user){
           if(err) return console.error(err);

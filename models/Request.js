@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+const Statuses = Object.freeze({
+    Status: {
+        Open: "open",
+        Accepted: "accepted",
+        Fulfilled: "fulfilled",
+        Unfulfilled: "unfulfilled"
+    }
+  });
+
 const RequestSchema = new mongoose.Schema({
     phone: {type: String, required: true},
 
@@ -13,14 +22,16 @@ const RequestSchema = new mongoose.Schema({
     nextNotification: Date,
     status: {
         type: String,
-        enum: ['open','accepted','fulfilled','unfulfilled'],
-        default: 'open'
+        enum: Object.values(Statuses["Status"]),
+        default: Statuses.Status.Open
     },
     complete: {
         type:Boolean,
         default: false
     }
 })
+
+Object.assign(RequestSchema.statics,{Status});
 
 const Request = mongoose.model('Request', RequestSchema);
 module.exports = Request;
