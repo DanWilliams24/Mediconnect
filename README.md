@@ -30,3 +30,6 @@ Solution: After research and consideration, I made the decision to go with queri
 
 Note 1: In order to address the problem of filtering false traffic from other sources outside a protest, one can make use of the geographic data twilio sends with requests. Twilio's geographic data provides the city, state/province, postal code(zipcode), and country attached to a specific phone number. 
 
+
+Considerations for AWS changeover
+1. Remember to change Databases over to an empty production database. URL found in .env must change too.
