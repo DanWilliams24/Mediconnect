@@ -1,11 +1,9 @@
 const mongoose = require('mongoose');
 
 const Topic = Object.freeze({
-    Topics: {
-        Help: "HELP",
-        SignUp:"SIGNUP",
-        Medic: "MEDIC",
-    }
+    Help: "HELP",
+    SignUp:"SIGNUP",
+    Medic: "MEDIC",
 })
 
 //The user collection stores all who interact with the chatbot via phone
@@ -16,7 +14,7 @@ const UserSchema = new mongoose.Schema({
     isMedic: Boolean, // this field may be unneccessary
     topic: {
         type: String,
-        enum: Object.values(Topic["Topics"]),
+        enum: Object.values(Topic),
         default: '' //Yes this will crash. ALWAYS SUPPLY A TOPIC!!!
     },
     resID: {

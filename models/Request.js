@@ -1,13 +1,11 @@
 const mongoose = require('mongoose');
 
-const Statuses = Object.freeze({
-    Status: {
-        Incomplete: "incomplete",
-        Open: "open",
-        Accepted: "accepted",
-        Fulfilled: "fulfilled",
-        Unfulfilled: "unfulfilled"
-    }
+const Status = Object.freeze({
+    Incomplete: "incomplete",
+    Open: "open",
+    Accepted: "accepted",
+    Fulfilled: "fulfilled",
+    Unfulfilled: "unfulfilled"
   });
 
 const RequestSchema = new mongoose.Schema({
@@ -18,17 +16,17 @@ const RequestSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'Medic'
     },
-    madeAt: Date,
-    notificationCount: Number,
-    nextNotification: Date,
+    madeAt: String,
+    notificationCount: {type: Number, default: 0},
+    nextNotification: String,
     status: {
         type: String,
-        enum: Object.values(Statuses["Status"]),
-        default: Statuses.Status.Incomplete
+        enum: Object.values(Status),
+        default: Status.Incomplete
     }
 })
 
-Object.assign(RequestSchema.statics,{Statuses});
+Object.assign(RequestSchema.statics,{Status});
 
 const Request = mongoose.model('Request', RequestSchema);
 module.exports = Request;

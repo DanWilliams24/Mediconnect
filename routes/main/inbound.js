@@ -6,7 +6,7 @@ const User = require('../../models/User');
 const url = require('url')
 const { Topic } = require('../../models/User');
 const responseData = require('../../models/Responses.json');
-
+const dayjs = require('dayjs')
 /* GET home page. */
 router.get('/', function (req, res, next) {
   //Helper function to send a response via Twilio API
@@ -37,11 +37,11 @@ router.get('/', function (req, res, next) {
       if(user){
         //existing phone number. Search existing data for state and redirect user. 
         switch(user.topic){
-          case Topic.Topics.Help: redirect("/inbound/help", {From: user.id})
+          case Topic.Help: redirect("/inbound/help", {From: user.id})
             break;
-          case Topic.Topics.SignUp: redirect("/inbound/signup", {From: user.id})
+          case Topic.SignUp: redirect("/inbound/signup", {From: user.id})
             break;
-          case Topic.Topics.Medic: redirect("/inbound/medic", {From: user.id})
+          case Topic.Medic: redirect("/inbound/medic", {From: user.id})
             break;
           default: throw new Error("This is an impossible case as user should always have a topic.")
             break;
@@ -71,6 +71,8 @@ router.get('/', function (req, res, next) {
       break;
     default: checkMongo(); //otherwise check mongo for phone and carry on conversation
   }
+  
+  
 });
 
 module.exports = router;

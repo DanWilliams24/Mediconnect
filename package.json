@@ -8,6 +8,7 @@
   "dependencies": {
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
+    "dayjs": "^1.8.33",
     "debug": "~2.6.9",
     "dotenv": "^8.2.0",
     "dotenv-safe": "^8.2.0",

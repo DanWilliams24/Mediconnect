@@ -1,4 +1,11 @@
-# Mediconnect
+# 
+            __  __          _ _                                 _   
+           |  \/  | ___  __| (_) ___ ___  _ __  _ __   ___  ___| |_ 
+           | |\/| |/ _ \/ _` | |/ __/ _ \| '_ \| '_ \ / _ \/ __| __|
+           | |  | |  __/ (_| | | (_| (_) | | | | | | |  __/ (__| |_ 
+           |_|  |_|\___|\__,_|_|\___\___/|_| |_|_| |_|\___|\___|\__|
+                                                                    
+
 This serverside code is written with Node.js/Express and uses MongoDB as a database solution. It interfaces with the  Twilio SMS API via webhooks.
 Problems will be documented here, and soon instructions on setup will also be here.
 
