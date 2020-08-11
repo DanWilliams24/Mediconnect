@@ -23,8 +23,7 @@ router.get('/', function (req, res, next) {
   function redirect(pathname, options){
     //console.log("Req Query: " + req.body)
     const redirectQuery = {
-      "From": options.From || req.body.From,
-      "Body": req.body.Body, 
+      "User": options.From || req.query.From, 
       "isNew": options.isNew || false 
     }
     res.redirect(url.format({pathname: pathname,query: redirectQuery}))
@@ -33,7 +32,7 @@ router.get('/', function (req, res, next) {
   function checkMongo() {
     // Check if there are any responses for the current number in an incomplete
     // survey response
-    User.findOne({phone: req.body.From}, function (err, user){
+    User.findOne({phone: req.query.From}, function (err, user){
       if(user){
         //existing phone number. Search existing data for state and redirect user. 
         switch(user.topic){
@@ -54,20 +53,24 @@ router.get('/', function (req, res, next) {
     })
   }
 
-  var phone = req.body.From; 
-  var input = req.body.Body;
+  var phone = req.query.From; 
+  var input = req.query.Body;
   console.log(phone)
   console.log(input)
 
   //Check input to see if it is a keyword
   switch (input.toUpperCase()) {
-    case "HELP":
+    case "HELP ME":
       console.log("HELP ME")
       redirect("/inbound/help",{isNew: true});
       break;
     case "SIGNUP":
       console.log("SIGN ME UP")
       redirect("/inbound/signup", {isNew: true});
+      break;
+    case "TESTMEDIC":
+      console.log("Creating Dev Medic")
+      redirect("/inbound/medic", {isNew: true});
       break;
     default: checkMongo(); //otherwise check mongo for phone and carry on conversation
   }

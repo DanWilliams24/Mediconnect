@@ -27,6 +27,20 @@ const RequestSchema = new mongoose.Schema({
 })
 
 Object.assign(RequestSchema.statics,{Status});
+RequestSchema.methods.log = function(){
+    const data = 
+     "========================================"
+    + "\nUser: " + this.user
+    + "\nMedic: " + this.isMedic || "No medic assigned"
+    + "\nLocation: " + this.location || "No location provided"
+    + "\nMade At: " + this.madeAt
+    + "\nNext Notification: " + this.nextNotification
+    + "\nNotification Count: " + this.notificationCount
+    + "\nStatus: " + this.status.toUpperCase()
+    + "========================================"
+    console.log(data)
+
+}
 
 const Request = mongoose.model('Request', RequestSchema);
 module.exports = Request;

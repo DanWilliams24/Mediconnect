@@ -29,7 +29,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/inbound', inbound);
 app.use('/inbound/help', help);
-//app.use('/medic', medic);
+app.use('/inbound/medic', medic);
 //app.use('/signup', signup);
 
 

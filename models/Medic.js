@@ -1,6 +1,4 @@
 const mongoose = require('mongoose');
-
-
 const MedicSchema = new mongoose.Schema({
     user:{ //identifies user that is a medic
         type: mongoose.Schema.Types.ObjectId,
@@ -11,7 +9,7 @@ const MedicSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Request'
     }],
-    resID: {
+    resID: { //may not be needed anymore
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Response' }
 })
