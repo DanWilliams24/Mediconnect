@@ -3,16 +3,26 @@
 /**
  * Module dependencies.
  */
-//IDK
 var app = require('../app');
 var debug = require('debug')('mediconnect:server');
 var http = require('http');
+const config = require('../config');
+const mongoose = require('mongoose');
+
+// Initialize database connection - throws if database connection can't be
+// established
+mongoose.connect(config.mongoUrl, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log("MongoDB database connection established successfully");
+}).catch(err => console.log(err))
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '80');
+var port = normalizePort(config.port);
 app.set('port', port);
 
 /**
