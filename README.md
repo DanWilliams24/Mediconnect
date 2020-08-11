@@ -39,5 +39,6 @@ Note 1: In order to address the problem of filtering false traffic from other so
 
 Note 2: Twilio Webhook setting should be changed from HTTP GET to HTTP POST, and code should reflect this change(instead of req.query.[variable] use req.body.[variable])
 
+
 Considerations for AWS changeover
 1. Remember to change Databases over to an empty production database. URL found in .env must change too.
