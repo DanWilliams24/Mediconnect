@@ -10,7 +10,7 @@ const Request = require('../../models/Request');
 const { Topic } = require('../../models/User');
 const { Status } = require('../../models/Request');
 const dayjs = require('dayjs');
-const { MediaContext } = require('twilio/lib/rest/api/v2010/account/message/media');
+
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -127,7 +127,13 @@ router.get('/', function(req, res, next) {
             body: responseData.MEDIC[0].replace("%PLACEHOLDER%", location),
             from: cg.twilioNumber,
             to: medic.user.phone
-          }).then(message => console.log("Message Dispatched to: " + medic.user.phone + "\nSID: " + message.sid));
+          }).then( (message) => {
+            console.log("Message Dispatched to: " + medic.user.phone + "\nSID: " + message.sid);
+            
+          }).catch((error) => {
+            console.error("Something bad happened:", error.toString())
+          })
+
         }
       }else{
         respond(responseData.ERROR[2])

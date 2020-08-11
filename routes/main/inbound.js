@@ -1,12 +1,12 @@
 var express = require('express');
 var router = express.Router();
-const cg = require('../../config')
+
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
 const User = require('../../models/User');
 const url = require('url')
 const { Topic } = require('../../models/User');
 const responseData = require('../../models/Responses.json');
-const dayjs = require('dayjs')
+
 /* GET home page. */
 router.get('/', function (req, res, next) {
   //Helper function to send a response via Twilio API
