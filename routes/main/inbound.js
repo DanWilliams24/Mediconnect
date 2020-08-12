@@ -68,7 +68,7 @@ router.get('/', function (req, res, next) {
       console.log("SIGN ME UP")
       redirect("/inbound/signup", {isNew: true});
       break;
-    case "TESTMEDIC":
+    case "TESTMEDIC"://this keyword is temporary. All medics are preregistered using the signup endpoint 
       console.log("Creating Dev Medic")
       redirect("/inbound/medic", {isNew: true});
       break;

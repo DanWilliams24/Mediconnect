@@ -79,10 +79,11 @@ router.get('/', function(req, res, next) {
             }
             break;
           case 1:
-            //Send response as soon as possible
-            dispatchMedics(req.query.Body)
+            
             Request.findOne({user: user.id}, function(err, request){
               if(err) return console.error(err);
+              //Send response as soon as possible
+              dispatchMedics(req.query.Body,request.reqID)
               request.location = req.query.Body
               user.resID +=1
               let now = dayjs()
@@ -113,7 +114,7 @@ router.get('/', function(req, res, next) {
     })
   }
 
-  function dispatchMedics(location){
+  function dispatchMedics(location,reqID){
     //1. finalize Request, push to db
     //2. Search for available medics
     //3. Use response.json to send back the appropriate message
@@ -124,7 +125,7 @@ router.get('/', function(req, res, next) {
         for(var medic of medics){
           //console.log("Message Dispatched to: " + medic.user.phone)
           twilio.messages.create({
-            body: responseData.MEDIC[0].replace("%PLACEHOLDER%", location),
+            body: responseData.MEDIC[0].replace("%PLACEHOLDER%", location).replace("%IDPLACEHOLDER%",reqID),
             from: cg.twilioNumber,
             to: medic.user.phone
           }).then( (message) => {

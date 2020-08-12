@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const autoIncrement = require('mongoose-auto-increment');
 const Status = Object.freeze({
     Incomplete: "incomplete",
     Open: "open",
@@ -16,6 +16,7 @@ const RequestSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'Medic'
     },
+    reqID: Number,
     madeAt: String,
     notificationCount: {type: Number, default: 0},
     nextNotification: String,
@@ -25,6 +26,13 @@ const RequestSchema = new mongoose.Schema({
         default: Status.Incomplete
     }
 })
+autoIncrement.initialize(mongoose.connection);
+RequestSchema.plugin(autoIncrement.plugin, {
+    model: "Request",
+    field: "reqID",
+    startAt: 1000,
+    incrementBy: 1
+});
 
 Object.assign(RequestSchema.statics,{Status});
 RequestSchema.methods.log = function(){
