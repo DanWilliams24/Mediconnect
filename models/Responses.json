@@ -7,10 +7,11 @@
         "Hi! We have distributed your request to all available medics. We will let you know ASAP once a medic becomes available. if you would like to withdraw your request, please text back 'Cancel'"
     ],
     "MEDIC":[
-        "Hi medics! We have a case. Here’s the location description: %PLACEHOLDER%. If you’re nearby and are willing to help, please reply with 'ACCEPT #%IDPLACEHOLDER%'. To pause injury notifications type 'PAUSE'. You can turn notifications back on with 'RESUME'" ,
+        "Hi medics! We have a case. Here’s the location description: %PLACEHOLDER%. If you’re nearby and are willing to help, please reply with 'ACCEPT %IDPLACEHOLDER%'. To pause injury notifications type 'PAUSE'. You can turn notifications back on with 'RESUME'" ,
         "Thanks for responding. Remember to stay alert for future injury notifications.",
-        "We have a medic on the case! Thanks for responding. Remember to stay alert for future injury notifications.",
-        "Thanks! The protestor has been notified that you’re en-route."
+        "A medic has accepted case #%PLACEHOLDER%! %OTHERPLACEHOLDER%. Remember to stay alert for future injury notifications.",
+        "This is the location info: %PLACEHOLDER%. Are you sure you would like to take this case? Reply 'YES' to confirm and 'NO' to cancel.",
+        "Thanks for taking up the case! The requester has been notified that you’re en-route."
     ],
     "ERROR":[
         "Hello! Unfortunately we were unable to understand what you said. Please text 'HELP' to get in contact with onsite medics or 'SIGNUP' to register as a onsite medic.",

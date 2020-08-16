@@ -11,9 +11,7 @@ const MedicSchema = new mongoose.Schema({
         ref: 'Request'
     }],
     medID: Number,
-    resID: { //may not be needed anymore
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Response' }
+
 })
 autoIncrement.initialize(mongoose.connection);
 MedicSchema.plugin(autoIncrement.plugin, {
@@ -22,6 +20,19 @@ MedicSchema.plugin(autoIncrement.plugin, {
     startAt: 1000,
     incrementBy: 1
 });
+MedicSchema.methods.log = function(){
+    const data = 
+     "========================================"
+    + "\nUser: " + this.user
+    + "\nMedic ID: " + this.medID
+    + "\nAvailable: " + this.available
+    + "\nMade At: " + this.madeAt
+    + "\nNext Notification: " + this.nextNotification
+    + "\nNotification Count: " + this.notificationCount
+    + "\nStatus: " + this.status.toUpperCase()
+    + "========================================"
+    console.log(data)
+}
 
 const Medic = mongoose.model('Medic', MedicSchema);
 module.exports = Medic;

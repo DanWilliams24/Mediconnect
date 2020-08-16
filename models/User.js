@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const Topic = Object.freeze({
-    Help: "HELP",
-    SignUp:"SIGNUP",
-    Medic: "MEDIC",
+    Help: "HELP", //Manages 'HELP' Request creation
+    SignUp:"SIGNUP", //Manages signup for medic
+    Medic: "MEDIC", //Manages acceptance of requests by medics
 })
 
 //The user collection stores all who interact with the chatbot via phone

@@ -1,8 +1,5 @@
 var express = require('express');
 var router = express.Router();
-const cg = require('../../config')
-const twilio = require('twilio')(cg.accountSid, cg.authToken);
-const MessagingResponse = require('twilio').twiml.MessagingResponse;
 const User = require('../../models/User')
 const Medic = require('../../models/Medic')
 const responseData = require('../../models/Responses.json');
@@ -10,17 +7,13 @@ const Request = require('../../models/Request');
 const { Topic } = require('../../models/User');
 const { Status } = require('../../models/Request');
 const dayjs = require('dayjs');
-
+const responder = require("../responder.js")
+const notifier = require("../notifier.js")
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-  function respond(message) {
-    const twiml = new MessagingResponse();
-    twiml.message(message);
-    console.log(twiml.toString())
-    res.writeHead(200, {'Content-Type': 'text/xml'});
-    res.end(twiml.toString());
-  }
+  //Helper function to send a response via Twilio API
+  const respond = (message) => responder(res).respond(message)
 
   function newConversation(){
     User.findOne({phone: req.query.From}, function (err, user){
@@ -84,22 +77,12 @@ router.get('/', function(req, res, next) {
               if(err) return console.error(err);
               //Send response as soon as possible
               dispatchMedics(req.query.Body,request.reqID)
-              request.location = req.query.Body
+              finalizeHelpRequest(request)
+              //replace with, may need a callback :( 
               user.resID +=1
-              let now = dayjs()
-              let nextNotification = now.add("5", "minute")
-              request.madeAt = now.toISOString()
-              request.nextNotification = nextNotification.toISOString()
-              request.status = Status.Open
-              request.save(function (err, completeReq){
+              user.save(function (err, updatedUser){
                 if(err) return console.error(err);
-                console.log("Request Pushed to DB: " + request.id)
-                request.log()
-              })
-               //replace with, may need a callback :( 
-              user.save(function (err, user){
-                if(err) return console.error(err);
-                console.log("Saved new resID as: " + user.resID)
+                console.log("Saved new resID as: " + updatedUser.resID)
               });
             })
             break;
@@ -113,6 +96,22 @@ router.get('/', function(req, res, next) {
       }
     })
   }
+  function finalizeHelpRequest(request){
+    //Right after medics are dispatched, save data
+    request.location = req.query.Body
+    let now = dayjs()
+    //let nextNotification = now.add("5", "minute")
+    request.madeAt = now.toISOString()
+    //request.nextNotification = nextNotification.toISOString() No reminder notifications
+    request.status = Status.Open
+    //notifier.schedule(request.id,now)
+    request.save(function (err, completeReq){
+      if(err) return console.error(err);
+      console.log("Request Pushed to DB: " + request.id)
+      request.log()
+    })
+
+  }
 
   function dispatchMedics(location,reqID){
     //1. finalize Request, push to db
@@ -123,20 +122,11 @@ router.get('/', function(req, res, next) {
       if(medics.length !== 0){
         respond(responseData.HELP[2])
         for(var medic of medics){
-          //console.log("Message Dispatched to: " + medic.user.phone)
-          twilio.messages.create({
-            body: responseData.MEDIC[0].replace("%PLACEHOLDER%", location).replace("%IDPLACEHOLDER%",reqID),
-            from: cg.twilioNumber,
-            to: medic.user.phone
-          }).then( (message) => {
-            console.log("Message Dispatched to: " + medic.user.phone + "\nSID: " + message.sid);
-            
-          }).catch((error) => {
-            console.error("Something bad happened:", error.toString())
-          })
-
+          const message = responseData.MEDIC[0].replace("%PLACEHOLDER%", location).replace("%IDPLACEHOLDER%",reqID)
+          notifier.sendNotification(medic.user.phone,message)
         }
       }else{
+        //No available medics
         respond(responseData.ERROR[2])
       }
     })

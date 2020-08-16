@@ -30,7 +30,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/inbound', inbound);
 app.use('/inbound/help', help);
 app.use('/inbound/medic', medic);
-//app.use('/signup', signup);
+app.use('/inbound/signup', signup);
 
 
 
