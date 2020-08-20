@@ -12,7 +12,7 @@ const responder = require("../responder.js")
 
 router.get('/', function(req, res, next) {
     //Helper function to send a response via Twilio API
-    const respond = (message) => responder(res).respond(message)
+    const respond = (message) => responder(req,res).respond(message)
     function newConversation(){
         let newUser = new User({phone: req.query.From,isMedic: true, topic: Topic.Medic})
         let newMedic = new Medic({user: newUser.id,available: true})

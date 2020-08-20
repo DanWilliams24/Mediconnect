@@ -1,4 +1,4 @@
-const json = require("./blocks.json")
+
 const cg = require('../config.js')
 const twilio = require('twilio')(cg.accountSid, cg.authToken);
 

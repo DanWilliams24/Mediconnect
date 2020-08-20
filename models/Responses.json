@@ -17,7 +17,8 @@
         "Hello! Unfortunately we were unable to understand what you said. Please text 'HELP' to get in contact with onsite medics or 'SIGNUP' to register as a onsite medic.",
         "Sorry but we are unable dispatch medical help to your location until you respond 'Yes' to confirm to the above statement. Please respond to this message 'Yes' to continue. ",
         "Unfortunately, there seems to be no medics available right now. If you require immediate attention, please survey your immediate surroundings by calling for a medic out-loud. We'll keep checking and update you ASAP once a Medic becomes available. ",
-        "Sorry but we could not find the specific help request you mentioned. Make sure you typed in the right Request ID in the format 'ACCEPT #12345', and try again."
+        "Sorry but we could not find the specific help request you mentioned. Make sure you typed in the right Request ID in the format 'ACCEPT #12345', and try again.",
+        "Sorry, it seems that this bot is currently offline or experiencing technical difficulties. Try again later."
     ]
 
 

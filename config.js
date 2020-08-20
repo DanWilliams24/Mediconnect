@@ -24,7 +24,7 @@ cfg.authToken = process.env.TWILIO_AUTH_TOKEN;
 cfg.twilioNumber = process.env.TWILIO_NUMBER;
 //My number used for testing purposes during development.
 cfg.myNumber = process.env.MY_NUMBER;
-
+cfg.MedicNumber = process.env.TWILIO_NUMBER_MEDIC || cfg.twilioNumber;
 // MongoDB connection string - MONGO_URL is for dev,
 cfg.mongoUrl = process.env.MONGO_URL; // default
 

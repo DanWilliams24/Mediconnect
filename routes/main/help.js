@@ -13,7 +13,7 @@ const notifier = require("../notifier.js")
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   //Helper function to send a response via Twilio API
-  const respond = (message) => responder(res).respond(message)
+  const respond = (message) => responder(req,res).respond(message)
 
   function newConversation(){
     User.findOne({phone: req.query.From}, function (err, user){
@@ -48,6 +48,7 @@ router.get('/', function(req, res, next) {
     User.findById(req.query.User, function (err, user){
       if(user){
         //console.log("Testing to see if Undefined === 0 in switch as falsy value " + user.resID)
+        //check ResID
         switch(user.resID){
           case 0: 
             //If the user responds yes, send back the next response,
