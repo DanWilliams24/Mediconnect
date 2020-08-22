@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 const cg = require('../../config')
-const MessagingResponse = require('twilio').twiml.MessagingResponse;
 const User = require('../../models/User');
 const { Topic } = require('../../models/User');
 const responseData = require('../../models/Responses.json');

@@ -7,18 +7,23 @@
         "Hi! We have distributed your request to all available medics. We will let you know ASAP once a medic becomes available. if you would like to withdraw your request, please text back 'Cancel'"
     ],
     "MEDIC":[
-        "Hi medics! We have a case. Here’s the location description: %PLACEHOLDER%. If you’re nearby and are willing to help, please reply with 'ACCEPT %IDPLACEHOLDER%'. To pause injury notifications type 'PAUSE'. You can turn notifications back on with 'RESUME'" ,
+        "Hi medics! We have a case. Here’s the location description: %PLACEHOLDER%. If you’re nearby and willing to help, please reply with 'ACCEPT %IDPLACEHOLDER%'." ,
         "Thanks for responding. Remember to stay alert for future injury notifications.",
         "A medic has accepted case #%PLACEHOLDER%! %OTHERPLACEHOLDER%. Remember to stay alert for future injury notifications.",
         "This is the location info: %PLACEHOLDER%. Are you sure you would like to take this case? Reply 'YES' to confirm and 'NO' to cancel.",
         "Thanks for taking up the case! The requester has been notified that you’re en-route."
     ],
+    "SIGNUP":[
+        "To pause injury notifications type 'PAUSE'. You can turn notifications back on with 'RESUME'"
+    ],
     "ERROR":[
         "Hello! Unfortunately we were unable to understand what you said. Please text 'HELP' to get in contact with onsite medics or 'SIGNUP' to register as a onsite medic.",
         "Sorry but we are unable dispatch medical help to your location until you respond 'Yes' to confirm to the above statement. Please respond to this message 'Yes' to continue. ",
         "Unfortunately, there seems to be no medics available right now. If you require immediate attention, please survey your immediate surroundings by calling for a medic out-loud. We'll keep checking and update you ASAP once a Medic becomes available. ",
-        "Sorry but we could not find the specific help request you mentioned. Make sure you typed in the right Request ID in the format 'ACCEPT #12345', and try again.",
-        "Sorry, it seems that this bot is currently offline or experiencing technical difficulties. Try again later."
+        "Sorry but we could not find that help request. Make sure you type a valid Request ID in the format 'ACCEPT 12345'",
+        "Sorry, it seems that this bot is currently experiencing technical difficulties. Try again later.",
+        "Sorry, it seems that this case is no longer available.",
+        "In order to accept this case, you must finish or cancel your current case."
     ]
 
 

@@ -16,75 +16,98 @@ router.get('/', function(req, res, next) {
   const respond = (message) => responder(req,res).respond(message)
 
   function newConversation(){
-    User.findOne({phone: req.query.From}, function (err, user){
+    User.findOne({phone: req.query.From}).exec().then(function (user){
       if(!user){
-        //Create new user. Note that ResID is not set so it can default to 0.
-        let newUser = new User({phone: req.query.From,isMedic: false, topic: Topic.Help})
-        //End response by sending an initial message back to twilio to the user.
-        respond(responseData.HELP[newUser.resID])
-        //Push to DB. 
-        newUser.save(function (err, createdUser){
-          if(err) return console.error(err);
-          console.log("NEW USER SUCCESSFULLY CREATED: " + createdUser.id)
-          createdUser.log();
-        });
+        //Create new user and save to db
+        saveDocument(createNewUser()).then(function () {
+          //End response by sending an initial message back to twilio to the user.
+          respond(responseData.HELP[req.session.counter])
+        }).catch(function (e){
+          respond(responseData.ERROR[4]) //technical difficulties
+          console.log(e)
+        })
       }else{
-        //This must be an existing person, but new conversation topic. 
-        //Change topic and reset ResID for user
-        user.topic = Topic.Help
-        user.resID = 0
-        //end response by sending an initial message back to twilio to the user.
-        respond(responseData.HELP[user.resID])
-        //Finally, update database document for existing user
-        user.save(function (err, updatedUser){
-          if(err) return console.error(err);
-          console.log("Updated existing User's topic: " + updatedUser.id)
-        });
+        //This must be an existing person, so restart on new conversation topic. 
+        resetUser(user)
+        saveDocument(user).then(function () {
+          //end response by sending an initial message back to twilio to the user.
+          respond(responseData.HELP[req.session.counter])
+        }).catch(function (e){
+          respond(responseData.ERROR[4]) //technical difficulties
+          console.log(e)
+        })
       }
+    }).catch(function (e){
+      respond(responseData.ERROR[4]) //technical difficulties
+      console.log("Impossible Error\n" + e.stack)
+    })
+  }
+
+  function createNewUser(){
+    //Create new user. Note that ResID is not set so it can default to 0.
+    let newUser = new User({phone: req.query.From,isMedic: false, topic: Topic.Help})
+    req.session.counter = 0
+    return newUser
+  }
+
+  function createNewRequest(user){
+    //create new request document, update the users resID, and push all changes to DB
+    let newRequest = new Request({user: user.id})
+    req.session.counter +=1;
+    req.session.request = newRequest.id
+    console.log("New value of session counter: " + req.session.counter)
+    return newRequest
+  }
+
+  function resetUser(user){
+    //Change topic and reset ResID for user
+    user.topic = Topic.Help
+    //user.resID = 0
+    req.session.counter = 0
+    console.log("Current value of session counter: " + req.session.counter)
+  }
+
+  function saveDocument(doc){
+    return new Promise((resolve,reject) =>{
+      //Push to DB. 
+      doc.save(function (err, createdUser){
+        if(err) return reject(err)
+        console.log("NEW USER SUCCESSFULLY CREATED: " + createdUser.id)
+        createdUser.log();
+        resolve()
+      });
     })
   }
   function continueConversation(){
+    console.log("Current value of session counter: " + req.session.counter)
     //Check to see if we are ready to create Help Request Dispatch
-    User.findById(req.query.User, function (err, user){
+    User.findById(req.query.User).exec().then(function (user) {
       if(user){
         //console.log("Testing to see if Undefined === 0 in switch as falsy value " + user.resID)
         //check ResID
-        switch(user.resID){
+        
+        switch(req.session.counter){
           case 0: 
             //If the user responds yes, send back the next response,
             if(req.query.Body.toUpperCase() === "YES"){
-              respond(responseData.HELP[user.resID+1])
-              //create new request document, update the users resID, and push all changes to DB
-              let newRequest = new Request({user: user.id})
-              user.resID +=1;
-              //Complete saves asynchronously with callbacks (order doesnt matter here)
-              newRequest.save(function (err, request){
-                if(err) return console.error(err);
-                console.log("NEW REQUEST SUCCESSFULLY CREATED: " + request.id)
-              });
-              user.save(function (err, user){
-                if(err) return console.error(err);
-                console.log("Saved new resID as: " + user.resID)
-                console.log("New Response: " + responseData.HELP[user.resID])
-              });
+              saveDocument(createNewRequest(user)).then(function () {
+                //End response by sending an initial message back to twilio to the user.
+                respond(responseData.HELP[req.session.counter])
+              })
             } else {
               //User did not send back yes. Send back response waiting till they respond yes
               respond(responseData.ERROR[1])
             }
             break;
           case 1:
-            
-            Request.findOne({user: user.id}, function(err, request){
-              if(err) return console.error(err);
+            Request.findById(req.session.request).exec().then(function (request){
+              req.session.counter +=1;
               //Send response as soon as possible
               dispatchMedics(req.query.Body,request.reqID)
-              finalizeHelpRequest(request)
-              //replace with, may need a callback :( 
-              user.resID +=1
-              user.save(function (err, updatedUser){
-                if(err) return console.error(err);
-                console.log("Saved new resID as: " + updatedUser.resID)
-              });
+              finalizeHelpRequest()
+            }).catch(function (e){
+              //request session exists, but db request is gone. shouldnt happen
+              respond(responseData.ERROR[4]) 
             })
             break;
           case 2: respond(responseData.HELP[4])
@@ -93,25 +116,26 @@ router.get('/', function(req, res, next) {
         }
       }else{
         console.error("User Not Found: It seems that something has went wrong. There should be an existing user if the conversation is being continued ")
-        console.error("Error info: " + err)
+        //console.error("Error info: ")
       }
     })
   }
-  function finalizeHelpRequest(request){
+  function finalizeHelpRequest(){
     //Right after medics are dispatched, save data
-    request.location = req.query.Body
-    let now = dayjs()
-    //let nextNotification = now.add("5", "minute")
-    request.madeAt = now.toISOString()
-    //request.nextNotification = nextNotification.toISOString() No reminder notifications
-    request.status = Status.Open
-    //notifier.schedule(request.id,now)
-    request.save(function (err, completeReq){
-      if(err) return console.error(err);
-      console.log("Request Pushed to DB: " + request.id)
-      request.log()
+    Request.findById(req.session.request).exec().then(function (request){
+      request.location = req.query.Body
+      let now = dayjs()
+      request.madeAt = now.toISOString()
+      request.status = Status.Open
+      saveDocument(request).then(function () {
+        console.log("Request Pushed to DB: " + request.id)
+        request.log()
+      }).catch(function (e){
+        console.log(e)
+      })
+    }).catch(function (e){
+      console.log(e)
     })
-
   }
 
   function dispatchMedics(location,reqID){
@@ -119,7 +143,7 @@ router.get('/', function(req, res, next) {
     //2. Search for available medics
     //3. Use response.json to send back the appropriate message
     //4. Send request to all available medics
-    Medic.find({available: true}).populate("user").exec(function (err, medics){
+    Medic.find({available: true}).populate("user").exec().then(function (medics){
       if(medics.length !== 0){
         respond(responseData.HELP[2])
         for(var medic of medics){
@@ -130,6 +154,10 @@ router.get('/', function(req, res, next) {
         //No available medics
         respond(responseData.ERROR[2])
       }
+    }).catch(function (e){
+      //Error occurred
+      console.log(e)
+      respond(responseData.ERROR[4])
     })
   }
   console.log("From: " + req.query.From)

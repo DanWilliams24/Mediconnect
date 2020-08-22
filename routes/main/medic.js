@@ -8,6 +8,7 @@ const Request = require('../../models/Request');
 const InvalidInputError = require('./error/invalid-input-error')
 const ImpossibleError = require('./error/impossible-error')
 const QueryError = require('./error/query-error');
+const notifier = require("../notifier.js")
 const {
   Status
 } = require('../../models/Request');
@@ -15,6 +16,7 @@ const {
   Topic
 } = require('../../models/User');
 const responder = require("../responder.js");
+const LogicError = require('./error/logic-error');
 
 
 
@@ -22,7 +24,9 @@ const Keyword = Object.freeze({
   CANCEL: "CANCEL",
   PAUSE: "PAUSE",
   RESUME: "RESUME",
-  YES: "YES"
+  YES: "YES",
+  NO: "NO"
+
 })
 
 /* GET users listing. */
@@ -41,6 +45,8 @@ router.get('/', function (req, res, next) {
           if(e instanceof InvalidInputError){
             //Could not parse the medic's response. Ask them to try again in the right format
             respond(responseData.ERROR[3])
+          } else if(e instanceof LogicError){
+            respond(responseData.ERROR[6])
           }else{
             console.log(e)
           }
@@ -51,21 +57,33 @@ router.get('/', function (req, res, next) {
         validateClientIdentity()
           .then(medic => confirmRequest(medic))
           .then(({request,medic}) => notifyAllParties(request, medic))
-          .catch(err => {
-            if(err)
-            console.log(err)
-            respond(responseData.ERROR[3])
+          .then(docs => saveAllDocuments(docs))
+          .catch(function (e) {
+            if(e instanceof ImpossibleError){
+              //Request used to exist in DB but was deleted. Inform user
+              console.log(e.stack)
+              respond(responseData.ERROR[5])
+            }else {
+              console.log(e.stack)
+              if(!res.headersSent){
+                respond(responseData.ERROR[3])
+              }
+            }
           })
 
         break;
+      case Keyword.NO:
+        req.session.case = ""
+        respond("")
+        break;
       case Keyword.CANCEL:
         //Send response to user
-
+        
         //create brand new request?
         break;
       case Keyword.PAUSE:
         Medic.findOne({
-          phone: req.query.From
+          user: req.query.User
         }).then(function (medic) {
           medic.available = false
           medic.save().then(function () {
@@ -81,7 +99,7 @@ router.get('/', function (req, res, next) {
         break;
       case Keyword.RESUME:
         Medic.findOne({
-          phone: req.query.From
+          user: req.query.User
         }).then(function (medic) {
           medic.available = true
           medic.save().then(function () {
@@ -118,17 +136,22 @@ router.get('/', function (req, res, next) {
       if (!input.toUpperCase().includes("ACCEPT ")){
         return reject(new InvalidInputError("Input is not a valid response"))
       }
+      Request.findOne({medic: medic.id, status: Status.Accepted}).exec().then(function (request){
+        if(request){
+          return reject(new LogicError("User has already accepted a different request"))
+        }
+      })
       //parse out the request id
       var parsedReqID = Number.parseInt(input.split(" ")[1])
       Request.findOne({reqID: parsedReqID}).exec().then(function (request){
         if(!request){
           return reject(new InvalidInputError("Unable to find request with that ID"))
         } 
+        req.session.case = request.id
+        console.log(req.session.case)
         //to reduce cancelled calls,  bot asks for confirmation first
         respond(responseData.MEDIC[3].replace("%PLACEHOLDER%", request.location))
-        //request never resaved
-        request.medic = medic.id
-        user.resID = 1
+        //using session variables replaces use of resID for medic endpoint
         resolve([user,medic,request])
       })//Ids will be padded
       .catch(function (e) {
@@ -166,14 +189,15 @@ router.get('/', function (req, res, next) {
       })
     })
   }
-
+//====================================ACCEPTING REQUESTS===================================\\
   function validateClientIdentity() {
     return new Promise((resolve, reject) => {
-      Medic.findOne({phone: req.query.From}).populate("user").exec() //promise-like
+      Medic.findOne({user: req.query.User}).populate("user").exec() //promise-like
         .then(function (medic) {
-          if (medic && medic.user.resID === 1) {
+          if (medic && req.session.case) {
             resolve(medic)
           } else {
+            console.log("Here: "+ req.session.case)
             reject(new InvalidInputError("Client is not a medic with a pending request acceptance confirmation."))
           }
         })
@@ -186,15 +210,12 @@ router.get('/', function (req, res, next) {
   function confirmRequest(medic) {
     return new Promise((resolve, reject) => {
       //update info and push to db
-      Request.findOne({
-          medic: medic.id
-        }).populate("user").exec() //promise-like
+      Request.findById(req.session.case).populate("user").exec() //promise-like
         .then(function (request) {
-          if (!request) return reject(new QueryError("Unable to find request with id"))
+          if (!request || (request && (request.status !== Status.Open) )) return reject(new ImpossibleError("Unable to find request with id, but request must exist. Did user retract help request or did the request status change?"))
           medic.available = false
           request.status = Status.Accepted
-          request.save()
-          medic.save()
+          request.medic = medic.id
           return resolve({
             request: request,
             medic: medic
@@ -215,7 +236,7 @@ router.get('/', function (req, res, next) {
     return new Promise((resolve, reject) => {
       //Broadcast request as accepted to all other relevant medics
       Medic.find({available: true}).populate("user").exec().then(function (medics) {
-        if (medics.length === 0) return reject(new Error("There are no medics currently available to notify"))
+        if (medics.length === 0) return reject(new Error("There are no medics currently available to notify about this update"))
         getOpenCases().then( function (openCaseIds) {
           var casesMessage = ""
           if (openCaseIds.length > 0) {
@@ -227,7 +248,7 @@ router.get('/', function (req, res, next) {
             const message = responseData.MEDIC[2].replace("%PLACEHOLDER%", request.reqID).replace("%OTHERPLACEHOLDER%", casesMessage)
             notifier.sendNotification(medic.user.phone, message)
           }
-          resolve()
+          resolve([request,medic])
         }).catch(function (e) {
           reject(e)
         })
@@ -236,19 +257,6 @@ router.get('/', function (req, res, next) {
       })
     })
   }
-
-  /*
-  console.log("From: " + req.query.From)
-  console.log("Body: " + req.query.Body)
-  
-  if(req.query.isNew === "true"){ //strict equality
-    console.log("New conversation started")
-    newConversation()
-  }else{
-    continueConversation()
-  }
-  */
-
   continueConversation();
 
 
