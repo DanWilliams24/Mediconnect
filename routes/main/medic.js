@@ -1,29 +1,29 @@
 var express = require('express');
 var router = express.Router();
 const cg = require('../../config')
-const User = require('../../models/User')
-const Medic = require('../../models/Medic')
-const responseData = require('../../models/Responses.json');
-const Request = require('../../models/Request');
-const InvalidInputError = require('./error/invalid-input-error')
-const ImpossibleError = require('./error/impossible-error')
-const QueryError = require('./error/query-error');
-const notifier = require("../notifier.js")
+const User = require('../../models/user-schema')
+const Medic = require('../../models/medic-schema')
+const responseData = require('../util/responses.json');
+const Request = require('../../models/request-schema');
+const InvalidInputError = require('../error/invalid-input-error')
+const ImpossibleError = require('../error/impossible-error')
+const QueryError = require('../error/query-error');
+const notifier = require("../util/notifier.js")
 const {
   Status
-} = require('../../models/Request');
+} = require('../../models/request-schema');
 const {
   Topic
-} = require('../../models/User');
-const responder = require("../responder.js");
-const LogicError = require('./error/logic-error');
+} = require('../../models/user-schema');
+const responder = require("../util/responder.js");
+const LogicError = require('../error/logic-error');
 
 
 
 const Keyword = Object.freeze({
   CANCEL: "CANCEL",
-  PAUSE: "PAUSE",
-  RESUME: "RESUME",
+  OFFLINE: "OFFLINE",
+  ONLINE: "ONLINE",
   YES: "YES",
   NO: "NO"
 
@@ -35,6 +35,41 @@ router.get('/', function (req, res, next) {
   const respond = (message) => responder(req,res).respond(message)
 
   function continueConversation() {
+    onACase().then(function (isOnCase){
+      console.log(isOnCase)
+      if(isOnCase){
+        provideCaseOptions()
+      }else{
+        processReply()
+      }
+    })
+  }
+  function provideCaseOptions(){
+    respond(responseData.MEDIC[4])
+  }
+
+  function onACase(){
+    return new Promise((resolve,reject) => {
+      Medic.findOne({user: req.query.User}).exec().then( function (medic){
+        Request.findById(req.session.case).exec().then(function (request){
+          if(request && (request.status == Status.Accepted) && (request.medic == medic.id)){
+            return resolve(true);
+          }else{
+            return resolve(false);
+          }
+        }).catch(function (e) {
+          console.log(e.stack)
+          return resolve(false)
+        })
+      }).catch(function (e){
+        console.log(e.stack)
+        return resolve(false);
+      })
+    })
+    
+  }
+
+  function processReply(){
     var input = req.query.Body.toUpperCase()
     switch (input) {
       default:
@@ -81,7 +116,7 @@ router.get('/', function (req, res, next) {
         
         //create brand new request?
         break;
-      case Keyword.PAUSE:
+      case Keyword.OFFLINE:
         Medic.findOne({
           user: req.query.User
         }).then(function (medic) {
@@ -97,7 +132,7 @@ router.get('/', function (req, res, next) {
           console.error(e);
         })
         break;
-      case Keyword.RESUME:
+      case Keyword.ONLINE:
         Medic.findOne({
           user: req.query.User
         }).then(function (medic) {
@@ -105,7 +140,9 @@ router.get('/', function (req, res, next) {
           medic.save().then(function () {
             console.log("Medic is now online: " + medic.id)
             availableMedic.log();
-            respond("")
+            createOpenCaseMessage().then(function (caseMessage){
+              respond("Hello! " + caseMessage + "To accept, reply 'ACCEPT (insert case number here)'")
+            })
           })
         }).catch(function (e) {
           //Handle error: Error occurred while finding/saving Medic object
@@ -116,6 +153,7 @@ router.get('/', function (req, res, next) {
     }
   }
 
+  
   function getClientMedic() {
     return new Promise((resolve,reject) => {
       User.findOne({phone: req.query.From}).exec().then(function (user){
@@ -160,20 +198,6 @@ router.get('/', function (req, res, next) {
     })
   }
 
-
-  function saveAllDocuments(docs){
-    return new Promise((resolve, reject) => {
-      try {
-        for(doc of docs){
-          doc.save()
-        }
-        console.log("Medic may be accepting a call")
-        return resolve()
-      }catch(e){
-        return reject(new Error("Problem occurred during document saving process."))
-      }
-    })
-  }
 
   function getOpenCases() {
     return new Promise((resolve, reject) => {
@@ -226,6 +250,21 @@ router.get('/', function (req, res, next) {
         })
     })
   }
+  function createOpenCaseMessage(){
+    return new Promise((resolve,reject) => {
+      getOpenCases().then( function (openCaseIds) {
+        var casesMessage = ""
+        if (openCaseIds.length > 0) {
+          casesMessage = "There are no other cases currently open."
+        } else {
+          casesMessage = "These cases are still open: " + openCaseIds + "."
+        }
+        return resolve(casesMessage)
+      }).catch(function (e){
+        return reject(e);
+      })
+    })
+  }
 
   function notifyAllParties(request, medic) {
     //Respond back to accepting medic 
@@ -237,20 +276,12 @@ router.get('/', function (req, res, next) {
       //Broadcast request as accepted to all other relevant medics
       Medic.find({available: true}).populate("user").exec().then(function (medics) {
         if (medics.length === 0) return reject(new Error("There are no medics currently available to notify about this update"))
-        getOpenCases().then( function (openCaseIds) {
-          var casesMessage = ""
-          if (openCaseIds.length > 0) {
-            casesMessage = "There are no other cases currently open"
-          } else {
-            casesMessage = "These cases are still open: " + openCaseIds
-          }
+        createOpenCaseMessage().then(function (casesMessage){
           for (var medic of medics) {
             const message = responseData.MEDIC[2].replace("%PLACEHOLDER%", request.reqID).replace("%OTHERPLACEHOLDER%", casesMessage)
             notifier.sendNotification(medic.user.phone, message)
           }
           resolve([request,medic])
-        }).catch(function (e) {
-          reject(e)
         })
       }).catch(function (e) {
         reject(e)

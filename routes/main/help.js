@@ -1,15 +1,15 @@
 var express = require('express');
 var router = express.Router();
-const User = require('../../models/User')
-const Medic = require('../../models/Medic')
-const responseData = require('../../models/Responses.json');
-const Request = require('../../models/Request');
-const { Topic } = require('../../models/User');
-const { Status } = require('../../models/Request');
+const User = require('../../models/user-schema')
+const Medic = require('../../models/medic-schema')
+const responseData = require('../util/responses.json');
+const Request = require('../../models/request-schema');
+const { Topic } = require('../../models/user-schema');
+const { Status } = require('../../models/request-schema');
 const dayjs = require('dayjs');
-const responder = require("../responder.js")
-const notifier = require("../notifier.js")
-
+const responder = require("../util/responder.js")
+const notifier = require("../util/notifier.js")
+const util = require("../util/utilities.js")
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   //Helper function to send a response via Twilio API
@@ -19,7 +19,7 @@ router.get('/', function(req, res, next) {
     User.findOne({phone: req.query.From}).exec().then(function (user){
       if(!user){
         //Create new user and save to db
-        saveDocument(createNewUser()).then(function () {
+        util.saveDocument(createNewUser()).then(function () {
           //End response by sending an initial message back to twilio to the user.
           respond(responseData.HELP[req.session.counter])
         }).catch(function (e){
@@ -29,7 +29,7 @@ router.get('/', function(req, res, next) {
       }else{
         //This must be an existing person, so restart on new conversation topic. 
         resetUser(user)
-        saveDocument(user).then(function () {
+        util.saveDocument(user).then(function () {
           //end response by sending an initial message back to twilio to the user.
           respond(responseData.HELP[req.session.counter])
         }).catch(function (e){
@@ -67,30 +67,16 @@ router.get('/', function(req, res, next) {
     console.log("Current value of session counter: " + req.session.counter)
   }
 
-  function saveDocument(doc){
-    return new Promise((resolve,reject) =>{
-      //Push to DB. 
-      doc.save(function (err, createdUser){
-        if(err) return reject(err)
-        console.log("NEW USER SUCCESSFULLY CREATED: " + createdUser.id)
-        createdUser.log();
-        resolve()
-      });
-    })
-  }
   function continueConversation(){
     console.log("Current value of session counter: " + req.session.counter)
     //Check to see if we are ready to create Help Request Dispatch
     User.findById(req.query.User).exec().then(function (user) {
       if(user){
-        //console.log("Testing to see if Undefined === 0 in switch as falsy value " + user.resID)
-        //check ResID
-        
         switch(req.session.counter){
           case 0: 
             //If the user responds yes, send back the next response,
             if(req.query.Body.toUpperCase() === "YES"){
-              saveDocument(createNewRequest(user)).then(function () {
+              util.saveDocument(createNewRequest(user)).then(function () {
                 //End response by sending an initial message back to twilio to the user.
                 respond(responseData.HELP[req.session.counter])
               })
@@ -127,7 +113,7 @@ router.get('/', function(req, res, next) {
       let now = dayjs()
       request.madeAt = now.toISOString()
       request.status = Status.Open
-      saveDocument(request).then(function () {
+      util.saveDocument(request).then(function () {
         console.log("Request Pushed to DB: " + request.id)
         request.log()
       }).catch(function (e){
@@ -159,6 +145,7 @@ router.get('/', function(req, res, next) {
       console.log(e)
       respond(responseData.ERROR[4])
     })
+    
   }
   console.log("From: " + req.query.From)
   console.log("Body: " + req.query.Body)

@@ -1,13 +1,14 @@
 var express = require('express');
 var router = express.Router();
 const cg = require('../../config')
-const User = require('../../models/User');
-const { Topic } = require('../../models/User');
-const responseData = require('../../models/Responses.json');
-const responder = require("../responder.js")
-const ImpossibleError = require('./error/impossible-error')
-const InvalidInputError = require('./error/invalid-input-error')
-const QueryError = require('./error/query-error');
+const User = require('../../models/user-schema');
+const { Topic } = require('../../models/user-schema');
+const responseData = require('../util/responses.json');
+const responder = require("../util/responder.js")
+const ImpossibleError = require('../error/impossible-error')
+const InvalidInputError = require('../error/invalid-input-error')
+const QueryError = require('../error/query-error');
+const statics = require('../util/statics');
 const Keyword = Object.freeze({
     HELP_ME: "HELP ME",
     SIGNUP: "SIGNUP",
@@ -31,36 +32,42 @@ router.get('/', function (req, res, next) {
     return;
   }*/
 
-  //Check input to see if it is a keyword
-  switch (input) {
-    case Keyword.HELP_ME:
-      console.log("New user with code - HELP ME")
-      redirect("/inbound/help",{isNew: true});
-      break;
-    case Keyword.SIGNUP:
-      console.log("New medic with code - SIGN ME UP")
-      redirect("/inbound/signup", {isNew: true});
-      break;
-    case Keyword.CHANGE://this keyword is temporary. All medics are preregistered using the signup endpoint 
-      console.log("Test endpoint - Creating Dev Medic")
-      redirect("/inbound/signup", {isNew: true});
-      break;
-    default: 
-      checkMongo()
-      .catch(function (e) {
-        if(e instanceof QueryError){
-          //new phone number, number has never been logged. They also did not use a keyword. 
-          // This may be an invalid request, send them back a list of valid keywords.
-          respond(responseData.ERROR[0])
-        }else if(e instanceof ImpossibleError){
-          console.error("BIG PROBLEM:\n" + e)
-        }else{
-          console.log("UNKNOWN PROBLEM:\n" + e)
-        }
-        if(!res.headersSent){
-          respond(responseData.ERROR[4])
-        }
-      }); //otherwise check mongo for phone and carry on conversation
+  //First, check static endpoints
+  const staticEndpointRes = statics.getMessage(input)
+  if(staticEndpointRes !== undefined){
+    respond(staticEndpointRes)
+  }else{
+    //Check input to see if it is a conversational keyword
+    switch (input) {
+      case Keyword.HELP_ME:
+        console.log("New user with code - HELP ME")
+        redirect("/inbound/help",{isNew: true});
+        break;
+      case Keyword.SIGNUP:
+        console.log("New medic with code - SIGN ME UP")
+        redirect("/inbound/signup", {isNew: true});
+        break;
+      case Keyword.CHANGE://this keyword is temporary. All medics are preregistered using the signup endpoint 
+        console.log("Test endpoint - Creating Dev Medic")
+        redirect("/inbound/signup", {isNew: true});
+        break;
+      default: 
+        checkMongo()
+        .catch(function (e) {
+          if(e instanceof QueryError){
+            //new phone number, number has never been logged. They also did not use a keyword. 
+            // This may be an invalid request, send them back a list of valid keywords.
+            respond(responseData.ERROR[0])
+          }else if(e instanceof ImpossibleError){
+            console.error("BIG PROBLEM:\n" + e)
+          }else{
+            console.log("UNKNOWN PROBLEM:\n" + e)
+          }
+          if(!res.headersSent){
+            respond(responseData.ERROR[4])
+          }
+        }); //otherwise check mongo for phone and carry on conversation
+    }
   }
 
   function checkMongo() {
