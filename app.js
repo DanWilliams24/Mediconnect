@@ -20,30 +20,8 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
-/*
 // Initialize database connection - throws if database connection can't be
 // established
-mongoose.set('useCreateIndex', true)
-mongoose.connect(cg.mongoUrl, {useNewUrlParser: true,useUnifiedTopology: true})
-.then(() => {
-  console.log("MongoDB database connection established successfully");
-  app.use(session({
-    secret: cg.secret,
-    path: '/',
-    store: new MongoStore({mongooseConnection:mongoose.connection}),
-    resave: true,
-    saveUninitialized: true
-  }));
-}).catch(err => {
-  console.log(err)
-  app.use(session({
-    secret: cg.secret,
-    resave: true,
-    saveUninitialized: true
-  }));
-})
-*/
-
 app.use(session({
   secret: cg.secret,
   store: new MongoStore({mongooseConnection:mongoose.connection}),
