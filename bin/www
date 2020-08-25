@@ -11,6 +11,7 @@ const mongoose = require('mongoose');
 
 // Initialize database connection - throws if database connection can't be
 // established
+mongoose.set('useCreateIndex', true)
 mongoose.connect(config.mongoUrl, {
   useNewUrlParser: true,
   useUnifiedTopology: true

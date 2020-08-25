@@ -1,81 +1,109 @@
 var express = require('express');
 var router = express.Router();
 const cg = require('../../config')
-const MessagingResponse = require('twilio').twiml.MessagingResponse;
-const User = require('../../models/User');
-const url = require('url')
-const { Topic } = require('../../models/User');
-const responseData = require('../../models/Responses.json');
-const dayjs = require('dayjs')
+const User = require('../../models/user-schema');
+const { Topic } = require('../../models/user-schema');
+const responseData = require('../util/responses.json');
+const responder = require("../util/responder.js")
+const ImpossibleError = require('../error/impossible-error')
+const InvalidInputError = require('../error/invalid-input-error')
+const QueryError = require('../error/query-error');
+const statics = require('../util/statics');
+const Keyword = Object.freeze({
+    HELP_ME: "HELP ME",
+    SIGNUP: "SIGNUP",
+    CHANGE: "CHANGE"
+})
+
+
 /* GET home page. */
 router.get('/', function (req, res, next) {
   //Helper function to send a response via Twilio API
-  function respond(message) {
-    const twiml = new MessagingResponse();
-    twiml.message(message);
-    console.log(twiml.toString())
-    res.writeHead(200, {'Content-Type': 'text/xml'});
-    res.end(twiml.toString());
-  }
-  
-  //Redirects to other pages while preserving important data 
-  //Options: If starting a new convo, supply only true to isNew. Otherwise, supply user id to from field 
-  function redirect(pathname, options){
-    //console.log("Req Query: " + req.body)
-    const redirectQuery = {
-      "User": options.From || req.query.From, 
-      "isNew": options.isNew || false 
+  const respond = (message) => responder(req,res).respond(message)
+  const redirect = (path,options) => responder(req,res).redirect(path,options)
+
+  var phone = req.query.From.toUpperCase(); 
+  var input = req.query.Body.toUpperCase();
+  console.log(phone)
+  console.log(input)
+  /* Potential way of handling two numbers
+  if(req.query.To === cg.MedicNumber){
+    checkMongo()
+    return;
+  }*/
+
+  //First, check static endpoints
+  const staticEndpointRes = statics.getMessage(input)
+  if(staticEndpointRes !== undefined){
+    respond(staticEndpointRes)
+  }else{
+    //Check input to see if it is a conversational keyword
+    switch (input) {
+      case Keyword.HELP_ME:
+        console.log("New user with code - HELP ME")
+        redirect("/inbound/help",{isNew: true});
+        break;
+      case Keyword.SIGNUP:
+        console.log("New medic with code - SIGN ME UP")
+        redirect("/inbound/signup", {isNew: true});
+        break;
+      case Keyword.CHANGE://this keyword is temporary. All medics are preregistered using the signup endpoint 
+        console.log("Test endpoint - Creating Dev Medic")
+        redirect("/inbound/signup", {isNew: true});
+        break;
+      default: 
+        checkMongo()
+        .catch(function (e) {
+          if(e instanceof QueryError){
+            //new phone number, number has never been logged. They also did not use a keyword. 
+            // This may be an invalid request, send them back a list of valid keywords.
+            respond(responseData.ERROR[0])
+          }else if(e instanceof ImpossibleError){
+            console.error("BIG PROBLEM:\n" + e)
+          }else{
+            console.log("UNKNOWN PROBLEM:\n" + e)
+          }
+          if(!res.headersSent){
+            respond(responseData.ERROR[4])
+          }
+        }); //otherwise check mongo for phone and carry on conversation
     }
-    res.redirect(url.format({pathname: pathname,query: redirectQuery}))
   }
 
   function checkMongo() {
-    // Check if there are any responses for the current number in an incomplete
-    // survey response
-    User.findOne({phone: req.query.From}, function (err, user){
-      if(user){
+    // Check if there are any responses for the current number in an incomplete survey response
+    return new Promise((resolve,reject) => {
+      User.findOne({phone: req.query.From}).exec().then(user => {
+        if(!user) return reject(new QueryError("Query returned no documents"))
+        
+        /*Potential way of handling two numbers
+        if(user.isMedic && req.query.To == cg.MedicNumber){ //loose equality needed?
+          resolve()
+          redirect("/inbound/medic", {From: user.id})
+          return;
+        }Other approach, have traffic from the medic number go straight to medic endpoint*/
+
         //existing phone number. Search existing data for state and redirect user. 
         switch(user.topic){
-          case Topic.Help: redirect("/inbound/help", {From: user.id})
+          case Topic.Help: 
+            resolve(redirect("/inbound/help", {From: user.id}))
             break;
-          case Topic.SignUp: redirect("/inbound/signup", {From: user.id})
+          case Topic.SignUp: 
+            resolve(redirect("/inbound/signup", {From: user.id}))
             break;
-          case Topic.Medic: redirect("/inbound/medic", {From: user.id})
+          case Topic.Medic: 
+            resolve(redirect("/inbound/medic", {From: user.id}))
             break;
-          default: throw new Error("This is an impossible case as user should always have a topic.")
-            break;
+          default: return reject(new ImpossibleError("This is an impossible case as user should always have a topic."))
         }
-      } else {
-        //new phone number, number has never been logged. They also did not use a keyword. 
-        // This may be an invalid request, send them back a list of valid keywords.
-        respond(responseData.ERROR[0])
-      }
+        
+      }).catch(function (e) {
+        reject(e)
+      })
     })
+    
   }
-
-  var phone = req.query.From; 
-  var input = req.query.Body;
-  console.log(phone)
-  console.log(input)
-
-  //Check input to see if it is a keyword
-  switch (input.toUpperCase()) {
-    case "HELP ME":
-      console.log("HELP ME")
-      redirect("/inbound/help",{isNew: true});
-      break;
-    case "SIGNUP":
-      console.log("SIGN ME UP")
-      redirect("/inbound/signup", {isNew: true});
-      break;
-    case "TESTMEDIC":
-      console.log("Creating Dev Medic")
-      redirect("/inbound/medic", {isNew: true});
-      break;
-    default: checkMongo(); //otherwise check mongo for phone and carry on conversation
-  }
-  
-  
 });
 
 module.exports = router;
+//module.exports = Keyword;
