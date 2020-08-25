@@ -29,7 +29,7 @@ router.get('/', function(req, res, next) {
             util.saveDocument(createMedic({user: req.query.User,available: true}))
             .then(medic => {
                 respond(responseData.MEDIC[1])
-                notifier.sendMedicNotification(req.query.From,responseData.SIGNUP[0].replace("%PLACEHOLDER%",medic.medID))
+                notifier.sendMedicNotification(req.query.From,responseData.SIGNUP[0].replace("%PLACEHOLDER%",medic.medID) + responseData.SIGNUP[1])
             })
         }else{
             respond(responseData.ERROR[7])

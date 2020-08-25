@@ -14,18 +14,18 @@
     "Thanks for taking up the case! The requester has been notified that you're en-route."
   ],
   "SIGNUP": [
-    "Thanks for signing up Medic #%PLACEHOLDER%. Remember to stay alert for future injury notifications.",
-    "To pause injury notifications type 'PAUSE'. You can turn notifications back on with 'RESUME'"
+    "Thanks for signing up Medic #%PLACEHOLDER%! Remember to stay alert for future injury notifications. When a request comes in you and all other medics will be notified and given a chance to accept. The first medic that does, gets assigned the case.",
+    "To stop injury notifications type 'OFFLINE'. You can turn notifications back on with 'ONLINE'"
   ],
   "ERROR": [
     "Unfortunately we were unable to understand what you said. Please text 'HELP ME' to get in contact with onsite medics or 'SIGNUP' to register as a onsite medic.",
-    "We are unable dispatch medical help to your location until you respond 'Yes' to confirm to the above statement. Please respond to this message 'Yes' to continue. ",
+    "We are unable dispatch medical help to your location until you respond 'YES' to confirm to the above statement. Please respond to this message 'Yes' to continue. ",
     "Unfortunately, there seems to be no medics available right now. If you require immediate attention, please survey your immediate surroundings by calling for a medic out-loud. We'll keep checking and update you ASAP once a Medic becomes available. ",
-    "Sorry but we could not find that help request. Make sure you type a valid Request ID in the format 'ACCEPT 12345'",
+    "Sorry but we could not find that help request. Make sure you type a valid Request ID in the format 'ACCEPT 1234'",
     "Sorry, it seems that this bot is currently experiencing technical difficulties. Try again later.",
     "Sorry, it seems that this case is no longer available.",
     "In order to accept this case, you must finish or cancel your current case.",
-    "Please respond to this message 'Yes' to continue."
+    "Please respond to this message 'YES' to continue."
   ],
   "SUPPLY": [
     "Here is some information about the location of medical and supply tents located in DC for protestors: *Not Available*. Text 'HELP' in order to get in touch with an on-site medic. Text 'COVID' for reminders and information on how to stay safe while protesting during a pandemic."

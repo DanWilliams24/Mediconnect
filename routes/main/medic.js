@@ -44,6 +44,7 @@ router.get('/', function (req, res, next) {
       }
     })
   }
+  //Need to add more options like getting more info on location
   function provideCaseOptions(){
     respond(responseData.MEDIC[4])
   }
@@ -74,7 +75,7 @@ router.get('/', function (req, res, next) {
     switch (input) {
       default:
         getClientMedic()
-        .then(({user,medic}) => validateAndFindRequest(user,medic))
+        .then(medic => validateAndFindRequest(medic))
         .then(docs => saveAllDocuments(docs))
         .catch(function (e) {
           if(e instanceof InvalidInputError){
@@ -156,19 +157,14 @@ router.get('/', function (req, res, next) {
   
   function getClientMedic() {
     return new Promise((resolve,reject) => {
-      User.findOne({phone: req.query.From}).exec().then(function (user){
-        if(!user) return reject(new QueryError("Unknown user on medic endpoint."))
-        Medic.findOne({user: user.id}).exec().then(medic => resolve({user:user,medic:medic}))
-        .catch(function (e) {
-          reject(e)
-        })
-      }).catch(function (e) {
+      Medic.findOne({user: req.query.User}).exec().then(medic => resolve(medic))
+      .catch(function (e) {
         reject(e)
-      })  
+      }) 
     })
   }
 
-  function validateAndFindRequest(user,medic) {
+  function validateAndFindRequest(medic) {
     return new Promise((resolve,reject) => {
       var input = req.query.Body
       if (!input.toUpperCase().includes("ACCEPT ")){
@@ -190,7 +186,7 @@ router.get('/', function (req, res, next) {
         //to reduce cancelled calls,  bot asks for confirmation first
         respond(responseData.MEDIC[3].replace("%PLACEHOLDER%", request.location))
         //using session variables replaces use of resID for medic endpoint
-        resolve([user,medic,request])
+        resolve([medic,request])
       })//Ids will be padded
       .catch(function (e) {
         reject(e)
