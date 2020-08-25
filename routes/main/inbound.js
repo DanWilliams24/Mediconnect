@@ -20,7 +20,7 @@ const Keyword = Object.freeze({
 router.get('/', function (req, res, next) {
   //Helper function to send a response via Twilio API
   const respond = (message) => responder(req,res).respond(message)
-  const redirect = (path,options) => responder(req,res).testredirect(path,options)
+  const redirect = (path,options) => responder(req,res).redirect(path,options)
 
   var phone = req.query.From.toUpperCase(); 
   var input = req.query.Body.toUpperCase();
