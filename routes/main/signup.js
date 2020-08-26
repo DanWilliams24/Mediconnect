@@ -25,7 +25,7 @@ router.get('/', function(req, res, next) {
     }
 
     function continueConversation(){
-        if(req.query.body.toUpperCase() === "YES"){
+        if(req.query.Body.toUpperCase() === "YES"){
             util.saveDocument(createMedic({user: req.query.User,available: true}))
             .then(medic => {
                 respond(responseData.MEDIC[1])

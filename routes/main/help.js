@@ -69,6 +69,10 @@ router.get('/', function(req, res, next) {
 
   function continueConversation(){
     console.log("Current value of session counter: " + req.session.counter)
+    //Check to make sure conversation is in fact being continued
+    if(req.session.counter === undefined){
+      return respond(responseData.ERROR[0])
+    }
     //Check to see if we are ready to create Help Request Dispatch
     User.findById(req.query.User).exec().then(function (user) {
       if(user){
@@ -97,8 +101,7 @@ router.get('/', function(req, res, next) {
             })
             break;
           case 2: respond(responseData.HELP[4])
-          break;
-
+            break;
         }
       }else{
         console.error("User Not Found: It seems that something has went wrong. There should be an existing user if the conversation is being continued ")

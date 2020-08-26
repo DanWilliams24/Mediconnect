@@ -2,7 +2,7 @@ require('dotenv-safe').config();
 
 const cfg = {};
 //Sets whether to use twilio in development mode. This incurs no costs to your account and sends no real sms.
-cfg.useTestCredentials = false
+cfg.useTestCredentials = process.env.DEV_MODE || true
 // HTTP Port to run our web application
 cfg.port = process.env.PORT || 3000;
 

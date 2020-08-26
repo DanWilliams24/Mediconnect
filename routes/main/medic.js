@@ -17,6 +17,7 @@ const {
 } = require('../../models/user-schema');
 const responder = require("../util/responder.js");
 const LogicError = require('../error/logic-error');
+const { saveAllDocuments } = require('../util/utilities');
 
 
 
@@ -34,19 +35,47 @@ router.get('/', function (req, res, next) {
   //Helper function to send a response via Twilio API
   const respond = (message) => responder(req,res).respond(message)
 
-  function continueConversation() {
-    onACase().then(function (isOnCase){
-      console.log(isOnCase)
-      if(isOnCase){
-        provideCaseOptions()
-      }else{
-        processReply()
-      }
-    })
-  }
+  onACase().then(function (isOnCase){
+    console.log(isOnCase)
+    if(isOnCase){
+      provideCaseOptions()
+    }else{
+      processReply()
+    }
+  })
+  
   //Need to add more options like getting more info on location
   function provideCaseOptions(){
-    respond(responseData.MEDIC[4])
+    var input = req.query.Body.toUpperCase()
+    switch (input) {
+      case Keyword.CANCEL:
+        //Send response to user
+        //set request as open
+        //create brand new request?
+        cancelCaseAcceptance()
+        break;
+      default: respond(responseData.MEDIC[4])
+    }
+  }
+  function cancelCaseAcceptance(){
+    return new Promise((resolve,reject) => {
+      Medic.findOne({user: req.query.User}).exec().then( function (medic){
+        Request.findOne({medic: medic.id}).populate("user").exec().then(function (request){
+          request.status = Status.Open
+          request.medic = undefined
+          medic.available = true
+          respond(responseData.MEDIC[5])
+          saveAllDocuments([request,medic])
+          notifier.sendNotification(request.user.phone, responseData.MEDIC[6])
+          Medic.find({available: true}).populate("user").exec().then(function (medics){
+            for(var med of medics){
+              const message = responseData.MEDIC[0].replace("%PLACEHOLDER%", request.location).replace("%IDPLACEHOLDER%",request.reqID)
+              notifier.sendNotification(med.user.phone,message)
+            }
+          }) 
+        })
+      })
+    })
   }
 
   function onACase(){
@@ -111,11 +140,6 @@ router.get('/', function (req, res, next) {
       case Keyword.NO:
         req.session.case = ""
         respond("")
-        break;
-      case Keyword.CANCEL:
-        //Send response to user
-        
-        //create brand new request?
         break;
       case Keyword.OFFLINE:
         Medic.findOne({
@@ -284,9 +308,6 @@ router.get('/', function (req, res, next) {
       })
     })
   }
-  continueConversation();
-
-
 })
 
 module.exports = router;

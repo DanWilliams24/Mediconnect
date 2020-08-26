@@ -20,8 +20,12 @@ const Keyword = Object.freeze({
 router.get('/', function (req, res, next) {
   //Helper function to send a response via Twilio API
   const respond = (message) => responder(req,res).respond(message)
-  const redirect = (path,options) => responder(req,res).redirect(path,options)
-
+  var redirect;
+  if(cg.useTestCredentials){
+    redirect = (path,options) => responder(req,res).testredirect(path,options)
+  }else{
+    redirect = (path,options) => responder(req,res).redirect(path,options)
+  }
   var phone = req.query.From.toUpperCase(); 
   var input = req.query.Body.toUpperCase();
   console.log(phone)
@@ -52,7 +56,7 @@ router.get('/', function (req, res, next) {
         redirect("/inbound/signup", {isNew: true});
         break;
       default: 
-        checkMongo()
+        checkUserTopic()
         .catch(function (e) {
           if(e instanceof QueryError){
             //new phone number, number has never been logged. They also did not use a keyword. 
@@ -70,7 +74,7 @@ router.get('/', function (req, res, next) {
     }
   }
 
-  function checkMongo() {
+  function checkUserTopic() {
     // Check if there are any responses for the current number in an incomplete survey response
     return new Promise((resolve,reject) => {
       User.findOne({phone: req.query.From}).exec().then(user => {

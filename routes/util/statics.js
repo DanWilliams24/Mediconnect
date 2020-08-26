@@ -5,7 +5,7 @@ module.exports = {
         var statics = {
             SUPPLY: responseData.SUPPLY[0],
             COVID:responseData.COVID[0],
-            BEFORE: responseData.BEFORE[0],
+            DURING: responseData.DURING[0],
             AFTER: responseData.AFTER[0]
         }
         var message = statics[key.toUpperCase()]
