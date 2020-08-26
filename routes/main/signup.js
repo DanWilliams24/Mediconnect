@@ -20,8 +20,7 @@ router.get('/', function(req, res, next) {
         //in continue convo:
         //Create new medic
         //send them welcome message from other number
-
-        util.saveDocument(findUser()).then(sendConfirmation())
+        findUser().then(user => util.saveDocument(user)).then( () => sendConfirmation())
     }
 
     function continueConversation(){
@@ -37,7 +36,7 @@ router.get('/', function(req, res, next) {
     }
 
     function sendConfirmation(){
-        respond(responseData.SIGNUP[0])
+        respond(responseData.ERROR[7])
     }
 
     function createMedic(properties){
@@ -45,17 +44,23 @@ router.get('/', function(req, res, next) {
     }
 
     function findUser(){
-        User.findOne({phone: req.query.phone}).exec().then(function (user){
-            //if there is no user create one
-            if(!user){
-                req.session.counter = 0
-                return new User({phone: req.query.From,isMedic: false, topic: Topic.SignUp})
-            }else{
-                req.session.counter = 0
-                user.topic = Topic.SignUp
-                return user
-            }
+        return new Promise((resolve,reject) => {
+            User.findOne({phone: req.query.phone}).exec().then(function (user){
+                //if there is no user create one
+                if(!user){
+                    req.session.counter = 0
+                    return resolve(new User({phone: req.query.From,isMedic: false, topic: Topic.SignUp}))
+                }else{
+                    req.session.counter = 0
+                    user.topic = Topic.SignUp
+                    return resolve(user)
+                }
+            }).catch(function (e){
+                console.log(e.stack)
+                reject(e)
+            })
         })
+        
     }
 
 

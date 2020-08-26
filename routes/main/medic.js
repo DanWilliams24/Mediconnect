@@ -81,8 +81,8 @@ router.get('/', function (req, res, next) {
   function onACase(){
     return new Promise((resolve,reject) => {
       Medic.findOne({user: req.query.User}).exec().then( function (medic){
-        Request.findById(req.session.case).exec().then(function (request){
-          if(request && (request.status == Status.Accepted) && (request.medic == medic.id)){
+        Request.findOne({medic: medic.id}).exec().then(function (request){
+          if(request){
             return resolve(true);
           }else{
             return resolve(false);
