@@ -54,7 +54,12 @@ router.get('/', function (req, res, next) {
         //create brand new request?
         cancelCaseAcceptance()
         break;
-      default: respond(responseData.MEDIC[4])
+      default: 
+      if (input.toUpperCase().includes("ACCEPT ")){
+        respond(responseData.ERROR[6])
+      }else{
+        respond(responseData.MEDIC[4])
+      }
     }
   }
   function cancelCaseAcceptance(){
