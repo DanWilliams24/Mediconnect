@@ -13,7 +13,7 @@ module.exports = {
         }).then( (sentMessage) => {
             console.log("Message Dispatched to: " + target + "\nSID: " + sentMessage.sid);
         }).catch((error) => {
-            console.error("Something bad happened:", error.toString())
+            console.error("Something bad happened while trying to send: " + message + " to the user: " + target+ ".\n" + error.toString())
         })
     },
     sendMedicNotification(target,message){
@@ -26,7 +26,7 @@ module.exports = {
         }).then( (sentMessage) => {
             console.log("Message Dispatched to: " + target + "\nSID: " + sentMessage.sid);
         }).catch((error) => {
-            console.error("Something bad happened:", error.toString())
+            console.error("Something bad happened while trying to send: " + message + " to the medic: " + target+ ".\n" + error.toString())
         })
     }
 }
