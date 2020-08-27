@@ -24,9 +24,12 @@ router.get('/', function (req, res, next) {
   const respond = (message) => responder(req,res).respond(message)
   const requestBody = util.sanitize(req.query.Body)
   var redirect;
+  console.log(cg.useTestCredentials) 
   if(cg.useTestCredentials){
+    console.log("using test redirects")
     redirect = (path,options) => responder(req,res).testredirect(path,options)
   }else{
+    console.log("using production redirects")
     redirect = (path,options) => responder(req,res).redirect(path,options)
   }
   var phone = req.query.From; 

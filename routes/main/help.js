@@ -14,6 +14,7 @@ const util = require("../util/utilities.js")
 router.get('/', function(req, res, next) {
   //Helper function to send a response via Twilio API
   const respond = (message) => responder(req,res).respond(message)
+  console.log(req.query.Body)
   const requestBody = util.sanitize(req.query.Body)
   function newConversation(){
     User.findOne({phone: req.query.From}).exec().then(function (user){
