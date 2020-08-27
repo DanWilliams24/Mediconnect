@@ -18,6 +18,7 @@ const RequestSchema = new mongoose.Schema({
     },
     reqID: Number,
     madeAt: String,
+    idInfo: String,
     notificationCount: {type: Number, default: 0},
     nextNotification: String,
     status: {

@@ -13,6 +13,7 @@ const notifier = require("../util/notifier.js")
 router.get('/', function(req, res, next) {
     //Helper function to send a response via Twilio API
     const respond = (message) => responder(req,res).respond(message)
+    const requestBody = util.sanitize(req.query.Body)
     function newConversation(){
         //Check if user is already in db if not create and save them
         //have them confirm responsibilities
@@ -24,7 +25,7 @@ router.get('/', function(req, res, next) {
     }
 
     function continueConversation(){
-        if(req.query.Body.toUpperCase() === "YES"){
+        if(requestBody.toUpperCase() === "YES"){
             util.saveDocument(createMedic({user: req.query.User,available: true}))
             .then(medic => {
                 respond(responseData.MEDIC[1])
@@ -36,7 +37,7 @@ router.get('/', function(req, res, next) {
     }
 
     function sendConfirmation(){
-        respond(responseData.ERROR[7])
+        respond(responseData.SIGNUP[2])
     }
 
     function createMedic(properties){
@@ -71,19 +72,6 @@ router.get('/', function(req, res, next) {
     }else{
         continueConversation()
     }
-
-/*
-    console.log("From: " + req.query.User)
-    console.log("Body: " + req.query.Body)
-  
-    if(req.query.Body.toUpperCase() == "SIGNUP"){
-        newConversation()
-    }else if(req.query.Body == "CHANGE"){
-        User.findOne({phone: req.query.From},function (err,user){
-            user.topic = Topic.Medic
-            user.save()
-        })
-    }*/
 })
 
 module.exports = router;

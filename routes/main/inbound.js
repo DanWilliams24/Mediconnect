@@ -9,6 +9,7 @@ const ImpossibleError = require('../error/impossible-error')
 const InvalidInputError = require('../error/invalid-input-error')
 const QueryError = require('../error/query-error');
 const statics = require('../util/statics');
+const util = require("../util/utilities")
 const Keyword = Object.freeze({
     HELP_ME: "HELP ME",
     SIGNUP: "SIGNUP",
@@ -19,22 +20,24 @@ const Keyword = Object.freeze({
 /* GET home page. */
 router.get('/', function (req, res, next) {
   //Helper function to send a response via Twilio API
+  const isFromMedicNumber = (req.query.To == cg.MedicNumber) && (cg.MedicNumber != cg.twilioNumber)
   const respond = (message) => responder(req,res).respond(message)
+  const requestBody = util.sanitize(req.query.Body)
   var redirect;
   if(cg.useTestCredentials){
     redirect = (path,options) => responder(req,res).testredirect(path,options)
   }else{
     redirect = (path,options) => responder(req,res).redirect(path,options)
   }
-  var phone = req.query.From.toUpperCase(); 
-  var input = req.query.Body.toUpperCase();
+  var phone = req.query.From; 
+  var input = requestBody.toUpperCase();
   console.log(phone)
   console.log(input)
-  /* Potential way of handling two numbers
-  if(req.query.To === cg.MedicNumber){
-    checkMongo()
+  // Potential way of handling two numbers
+  if(isFromMedicNumber){
+    checkUserTopic()
     return;
-  }*/
+  }
 
   //First, check static endpoints
   const staticEndpointRes = statics.getMessage(input)
@@ -49,10 +52,6 @@ router.get('/', function (req, res, next) {
         break;
       case Keyword.SIGNUP:
         console.log("New medic with code - SIGN ME UP")
-        redirect("/inbound/signup", {isNew: true});
-        break;
-      case Keyword.CHANGE://this keyword is temporary. All medics are preregistered using the signup endpoint 
-        console.log("Test endpoint - Creating Dev Medic")
         redirect("/inbound/signup", {isNew: true});
         break;
       default: 
@@ -80,12 +79,10 @@ router.get('/', function (req, res, next) {
       User.findOne({phone: req.query.From}).exec().then(user => {
         if(!user) return reject(new QueryError("Query returned no documents"))
         
-        /*Potential way of handling two numbers
-        if(user.isMedic && req.query.To == cg.MedicNumber){ //loose equality needed?
-          resolve()
-          redirect("/inbound/medic", {From: user.id})
-          return;
-        }Other approach, have traffic from the medic number go straight to medic endpoint*/
+        //Potential way of handling two numbers
+        if(user.isMedic && isFromMedicNumber){ //loose equality needed?
+          return resolve(redirect("/inbound/medic", {From: user.id}))
+        }//Other approach, have traffic from the medic number go straight to medic endpoint
 
         //existing phone number. Search existing data for state and redirect user. 
         switch(user.topic){

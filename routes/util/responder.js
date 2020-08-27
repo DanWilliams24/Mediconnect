@@ -8,7 +8,9 @@ module.exports = function (req,res) {
         //const respond = (message) => helper(res).respond(message)
         respond(message) {
             const twiml = new MessagingResponse();
-            twiml.message(message);
+            if(message){
+                twiml.message(message);
+            }
             console.log(twiml.toString())
             res.writeHead(200, {'Content-Type': 'text/xml'});
             res.end(twiml.toString());

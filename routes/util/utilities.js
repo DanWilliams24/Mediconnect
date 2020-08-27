@@ -1,7 +1,6 @@
 
 const cg = require('../../config.js')
-const twilio = require('twilio')(cg.accountSid, cg.authToken);
-
+const GsmCharsetUtils = require('@trt2/gsm-charset-utils');
 module.exports = {
     saveDocument(doc){
         return new Promise((resolve,reject) =>{
@@ -25,5 +24,14 @@ module.exports = {
           return reject(new Error("Problem occurred during document saving process."))
         }
       })
+    },
+
+    //Sanitize input direct from user that isnt a keyword. This strips input of common xml characters that
+    //arent detrimental to interpreting the string. It also ensures the string GSM-7 encoding compliant. 
+    sanitize (str) {
+      if(!str) {
+        return str;
+      }
+      return GsmCharsetUtils.removeNonGsmChars(str.replace( '<', '').replace( '>', ''));
     }
 }

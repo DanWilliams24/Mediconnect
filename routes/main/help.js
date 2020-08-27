@@ -14,7 +14,7 @@ const util = require("../util/utilities.js")
 router.get('/', function(req, res, next) {
   //Helper function to send a response via Twilio API
   const respond = (message) => responder(req,res).respond(message)
-
+  const requestBody = util.sanitize(req.query.Body)
   function newConversation(){
     User.findOne({phone: req.query.From}).exec().then(function (user){
       if(!user){
@@ -79,7 +79,7 @@ router.get('/', function(req, res, next) {
         switch(req.session.counter){
           case 0: 
             //If the user responds yes, send back the next response,
-            if(req.query.Body.toUpperCase() === "YES"){
+            if(requestBody.toUpperCase() === "YES"){
               util.saveDocument(createNewRequest(user)).then(function () {
                 //End response by sending an initial message back to twilio to the user.
                 respond(responseData.HELP[req.session.counter])
@@ -89,18 +89,26 @@ router.get('/', function(req, res, next) {
               respond(responseData.ERROR[1])
             }
             break;
+            
           case 1:
             Request.findById(req.session.request).exec().then(function (request){
               req.session.counter +=1;
+              updateHelpRequest()
+              respond(responseData.HELP[5])
+            })
+            break;
+          case 2:
+            Request.findById(req.session.request).exec().then(function (request){
+              req.session.counter +=1;
               //Send response as soon as possible
-              dispatchMedics(req.query.Body,request.reqID)
+              dispatchMedics(request.location,request.reqID)
               finalizeHelpRequest()
             }).catch(function (e){
               //request session exists, but db request is gone. shouldnt happen
               respond(responseData.ERROR[4]) 
             })
             break;
-          case 2: respond(responseData.HELP[4])
+          case 3: respond(responseData.HELP[4])
             break;
         }
       }else{
@@ -109,10 +117,25 @@ router.get('/', function(req, res, next) {
       }
     })
   }
+  function updateHelpRequest(){
+    //Right after medics are dispatched, save data
+    Request.findById(req.session.request).exec().then(function (request){
+      request.location = requestBody
+      util.saveDocument(request).then(function () {
+        console.log("Request Pushed to DB: " + request.id)
+        request.log()
+      }).catch(function (e){
+        console.log(e)
+      })
+    }).catch(function (e){
+      console.log(e)
+    })
+  }
+
   function finalizeHelpRequest(){
     //Right after medics are dispatched, save data
     Request.findById(req.session.request).exec().then(function (request){
-      request.location = req.query.Body
+      request.idInfo = requestBody
       let now = dayjs()
       request.madeAt = now.toISOString()
       request.status = Status.Open
@@ -137,7 +160,7 @@ router.get('/', function(req, res, next) {
         respond(responseData.HELP[2])
         for(var medic of medics){
           const message = responseData.MEDIC[0].replace("%PLACEHOLDER%", location).replace("%IDPLACEHOLDER%",reqID)
-          notifier.sendNotification(medic.user.phone,message)
+          notifier.sendMedicNotification(medic.user.phone,message)
         }
       }else{
         //No available medics
@@ -151,7 +174,7 @@ router.get('/', function(req, res, next) {
     
   }
   console.log("From: " + req.query.From)
-  console.log("Body: " + req.query.Body)
+  console.log("Body: " + requestBody)
   
   if(req.query.isNew === "true"){ //strict equality
     console.log("New conversation started")

@@ -27,9 +27,6 @@ MedicSchema.methods.log = function(){
     + "\nMedic ID: " + this.medID
     + "\nAvailable: " + this.available
     + "\nMade At: " + this.madeAt
-    + "\nNext Notification: " + this.nextNotification
-    + "\nNotification Count: " + this.notificationCount
-    + "\nStatus: " + this.status.toUpperCase()
     + "========================================"
     console.log(data)
 }

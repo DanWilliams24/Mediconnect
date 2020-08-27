@@ -40,8 +40,8 @@ describe("Encoding is GSM", () => {
                 
                 assert.equal(charCount.encoding, "GSM")
             })
-            it("Should be less than 3 message segments", () => {
-                assert(charCount.msgCount < 3)
+            it("Should be less than 5 message segments", () => {
+                assert(charCount.msgCount < 5)
             })
             it("Should be less than 600 characters", () => {
                 assert(charCount.charCount < 600)

@@ -17,7 +17,7 @@ const {
 } = require('../../models/user-schema');
 const responder = require("../util/responder.js");
 const LogicError = require('../error/logic-error');
-const { saveAllDocuments } = require('../util/utilities');
+const util = require('../util/utilities');
 
 
 
@@ -26,7 +26,8 @@ const Keyword = Object.freeze({
   OFFLINE: "OFFLINE",
   ONLINE: "ONLINE",
   YES: "YES",
-  NO: "NO"
+  NO: "NO",
+  COMPLETE: "COMPLETE"
 
 })
 
@@ -34,19 +35,19 @@ const Keyword = Object.freeze({
 router.get('/', function (req, res, next) {
   //Helper function to send a response via Twilio API
   const respond = (message) => responder(req,res).respond(message)
-
-  onACase().then(function (isOnCase){
-    console.log(isOnCase)
+  const requestBody = util.sanitize(req.query.Body)
+  onACase().then((isOnCase) => {
     if(isOnCase){
-      provideCaseOptions()
+      provideCaseOptions(isOnCase.medic,isOnCase.request)
     }else{
       processReply()
     }
   })
+    
   
   //Need to add more options like getting more info on location
-  function provideCaseOptions(){
-    var input = req.query.Body.toUpperCase()
+  function provideCaseOptions(medic,request){
+    var input = requestBody.toUpperCase()
     switch (input) {
       case Keyword.CANCEL:
         //Send response to user
@@ -54,63 +55,68 @@ router.get('/', function (req, res, next) {
         //create brand new request?
         cancelCaseAcceptance()
         break;
+      case Keyword.COMPLETE:
+        //before hand, the user should recieve a list of these keywords
+        //this is to complete a request
+        //make medic available again
+        request.status = Status.Fulfilled
+        medic.available = true
+        util.saveAllDocuments([request,medic])
+        respond(responseData.MEDIC[7])
+        break;
       default: 
       if (input.toUpperCase().includes("ACCEPT ")){
         respond(responseData.ERROR[6])
       }else{
-        respond(responseData.MEDIC[4])
+        respond(responseData.MEDIC[8])
       }
     }
   }
-  function cancelCaseAcceptance(){
+  function cancelCaseAcceptance(request,medic){
     return new Promise((resolve,reject) => {
-      Medic.findOne({user: req.query.User}).exec().then( function (medic){
-        Request.findOne({medic: medic.id}).populate("user").exec().then(function (request){
-          request.status = Status.Open
-          request.medic = undefined
-          medic.available = true
-          respond(responseData.MEDIC[5])
-          saveAllDocuments([request,medic])
-          notifier.sendNotification(request.user.phone, responseData.MEDIC[6])
-          Medic.find({available: true}).populate("user").exec().then(function (medics){
-            for(var med of medics){
-              const message = responseData.MEDIC[0].replace("%PLACEHOLDER%", request.location).replace("%IDPLACEHOLDER%",request.reqID)
-              notifier.sendNotification(med.user.phone,message)
-            }
-          }) 
-        })
-      })
+      request.status = Status.Open
+      request.medic = undefined
+      medic.available = true
+      respond(responseData.MEDIC[5])
+      util.saveAllDocuments([request,medic])
+      notifier.sendNotification(request.user.phone, responseData.MEDIC[6])
+      Medic.find({available: true}).populate("user").exec().then(function (medics){
+        for(var med of medics){
+          const message = responseData.MEDIC[0].replace("%PLACEHOLDER%", request.location).replace("%IDPLACEHOLDER%",request.reqID)
+          notifier.sendMedicNotification(med.user.phone,message)
+        }
+      }) 
     })
   }
 
   function onACase(){
     return new Promise((resolve,reject) => {
       Medic.findOne({user: req.query.User}).exec().then( function (medic){
-        Request.findOne({medic: medic.id}).exec().then(function (request){
+        Request.findOne({medic: medic.id}).populate("user").exec().then(function (request){
           if(request){
-            return resolve(true);
+            return resolve({medic:medic,request:request});
           }else{
-            return resolve(false);
+            return resolve(undefined);
           }
         }).catch(function (e) {
           console.log(e.stack)
-          return resolve(false)
+          return resolve(undefined)
         })
       }).catch(function (e){
         console.log(e.stack)
-        return resolve(false);
+        return resolve(undefined);
       })
     })
     
   }
 
   function processReply(){
-    var input = req.query.Body.toUpperCase()
+    var input = requestBody.toUpperCase()
     switch (input) {
       default:
         getClientMedic()
         .then(medic => validateAndFindRequest(medic))
-        .then(docs => saveAllDocuments(docs))
+        .then(docs => util.saveAllDocuments(docs))
         .catch(function (e) {
           if(e instanceof InvalidInputError){
             //Could not parse the medic's response. Ask them to try again in the right format
@@ -127,7 +133,7 @@ router.get('/', function (req, res, next) {
         validateClientIdentity()
           .then(medic => confirmRequest(medic))
           .then(({request,medic}) => notifyAllParties(request, medic))
-          .then(docs => saveAllDocuments(docs))
+          .then(docs => util.saveAllDocuments(docs))
           .catch(function (e) {
             if(e instanceof ImpossibleError){
               //Request used to exist in DB but was deleted. Inform user
@@ -195,7 +201,7 @@ router.get('/', function (req, res, next) {
 
   function validateAndFindRequest(medic) {
     return new Promise((resolve,reject) => {
-      var input = req.query.Body
+      var input = requestBody
       if (!input.toUpperCase().includes("ACCEPT ")){
         return reject(new InvalidInputError("Input is not a valid response"))
       }
@@ -279,7 +285,7 @@ router.get('/', function (req, res, next) {
     return new Promise((resolve,reject) => {
       getOpenCases().then( function (openCaseIds) {
         var casesMessage = ""
-        if (openCaseIds.length > 0) {
+        if (openCaseIds.length == 0) {
           casesMessage = "There are no other cases currently open."
         } else {
           casesMessage = "These cases are still open: " + openCaseIds + "."
@@ -304,7 +310,7 @@ router.get('/', function (req, res, next) {
         createOpenCaseMessage().then(function (casesMessage){
           for (var medic of medics) {
             const message = responseData.MEDIC[2].replace("%PLACEHOLDER%", request.reqID).replace("%OTHERPLACEHOLDER%", casesMessage)
-            notifier.sendNotification(medic.user.phone, message)
+            notifier.sendMedicNotification(medic.user.phone, message)
           }
           resolve([request,medic])
         })
