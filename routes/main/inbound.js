@@ -35,8 +35,13 @@ router.get('/', function (req, res, next) {
   console.log(input)
   // Potential way of handling two numbers
   if(isFromMedicNumber){
-    checkUserTopic()
-    return;
+    return checkUserTopic().catch(function (e) {
+      if(e instanceof QueryError){
+        //new phone number, not a user. On wrong phone number Send back nothing.
+        respond("")
+      }
+    })
+    
   }
 
   //First, check static endpoints
@@ -82,8 +87,10 @@ router.get('/', function (req, res, next) {
         //Potential way of handling two numbers
         if(user.isMedic && isFromMedicNumber){ //loose equality needed?
           return resolve(redirect("/inbound/medic", {From: user.id}))
-        }//Other approach, have traffic from the medic number go straight to medic endpoint
-
+        }else if(!user.isMedic && isFromMedicNumber){
+          //is a user, but not a medic texting the medic number
+          return resolve(respond(responseData.ERROR[8]))
+        }
         //existing phone number. Search existing data for state and redirect user. 
         switch(user.topic){
           case Topic.Help: 
