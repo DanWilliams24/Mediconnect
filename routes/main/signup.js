@@ -46,7 +46,7 @@ router.get('/', function(req, res, next) {
 
     function findUser(){
         return new Promise((resolve,reject) => {
-            User.findOne({phone: req.query.phone}).exec().then(function (user){
+            User.findOne({phone: req.query.From}).exec().then(function (user){
                 //if there is no user create one
                 if(!user){
                     req.session.counter = 0
