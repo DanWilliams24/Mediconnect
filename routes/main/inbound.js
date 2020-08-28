@@ -21,6 +21,7 @@ const Keyword = Object.freeze({
 router.get('/', function (req, res, next) {
   //Helper function to send a response via Twilio API
   const isFromMedicNumber = (req.query.To == cg.MedicNumber) && (cg.MedicNumber != cg.twilioNumber)
+  console.log(isFromMedicNumber +" "+ (req.query.To == cg.MedicNumber) +": "+ req.query.To + "==" + cg.MedicNumber)
   const respond = (message) => responder(req,res).respond(message)
   const requestBody = util.sanitize(req.query.Body)
   var redirect;

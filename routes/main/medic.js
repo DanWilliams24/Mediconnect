@@ -18,7 +18,7 @@ const {
 const responder = require("../util/responder.js");
 const LogicError = require('../error/logic-error');
 const util = require('../util/utilities');
-
+const {createOpenCaseMessage} = require('../util/utilities');
 
 
 const Keyword = Object.freeze({
@@ -53,7 +53,7 @@ router.get('/', function (req, res, next) {
         //Send response to user
         //set request as open
         //create brand new request?
-        cancelCaseAcceptance()
+        cancelCaseAcceptance(medic,request)
         break;
       case Keyword.COMPLETE:
         //before hand, the user should recieve a list of these keywords
@@ -62,7 +62,9 @@ router.get('/', function (req, res, next) {
         request.status = Status.Fulfilled
         medic.available = true
         util.saveAllDocuments([request,medic])
-        respond(responseData.MEDIC[7])
+        createOpenCaseMessage().then(function (caseMessage){
+          respond(responseData.MEDIC[7] +" " + caseMessage + " To accept, reply 'ACCEPT (insert case number here)'")
+        })
         break;
       default: 
       if (input.toUpperCase().includes("ACCEPT ")){
@@ -72,12 +74,14 @@ router.get('/', function (req, res, next) {
       }
     }
   }
-  function cancelCaseAcceptance(request,medic){
+  function cancelCaseAcceptance(medic,request){
     return new Promise((resolve,reject) => {
       request.status = Status.Open
       request.medic = undefined
       medic.available = true
-      respond(responseData.MEDIC[5])
+      createOpenCaseMessage().then(function (caseMessage){
+        respond(responseData.MEDIC[5] + " " + caseMessage + " To accept, reply 'ACCEPT (insert case number here)'")
+      })
       util.saveAllDocuments([request,medic])
       notifier.sendNotification(request.user.phone, responseData.MEDIC[6])
       Medic.find({available: true}).populate("user").exec().then(function (medics){
@@ -92,7 +96,7 @@ router.get('/', function (req, res, next) {
   function onACase(){
     return new Promise((resolve,reject) => {
       Medic.findOne({user: req.query.User}).exec().then( function (medic){
-        Request.findOne({medic: medic.id}).populate("user").exec().then(function (request){
+        Request.findOne({medic: medic.id, status: Status.Accepted}).populate("user").exec().then(function (request){
           if(request){
             return resolve({medic:medic,request:request});
           }else{
@@ -120,7 +124,8 @@ router.get('/', function (req, res, next) {
         .catch(function (e) {
           if(e instanceof InvalidInputError){
             //Could not parse the medic's response. Ask them to try again in the right format
-            respond(responseData.ERROR[3])
+            createOpenCaseMessage()
+            .then(caseMessage => respond(responseData.ERROR[3].replace("%PLACEHOLDER%", caseMessage)))
           } else if(e instanceof LogicError){
             respond(responseData.ERROR[6])
           }else{
@@ -142,7 +147,8 @@ router.get('/', function (req, res, next) {
             }else {
               console.log(e.stack)
               if(!res.headersSent){
-                respond(responseData.ERROR[3])
+                createOpenCaseMessage()
+                .then(caseMessage => respond(responseData.ERROR[3].replace("%PLACEHOLDER%", caseMessage)))
               }
             }
           })
@@ -159,7 +165,7 @@ router.get('/', function (req, res, next) {
           medic.available = false
           medic.save().then(function () {
             console.log("Medic no longer online: " + medic.id)
-            unavailableMedic.log();
+            //unavailableMedic.log();
             respond("")
           })
         }).catch(function (e) {
@@ -175,9 +181,9 @@ router.get('/', function (req, res, next) {
           medic.available = true
           medic.save().then(function () {
             console.log("Medic is now online: " + medic.id)
-            availableMedic.log();
+            //availableMedic.log();
             createOpenCaseMessage().then(function (caseMessage){
-              respond("Hello! " + caseMessage + "To accept, reply 'ACCEPT (insert case number here)'")
+              respond("Hello! " + caseMessage + " To accept, reply 'ACCEPT (insert case number here)'")
             })
           })
         }).catch(function (e) {
@@ -229,27 +235,12 @@ router.get('/', function (req, res, next) {
     })
   }
 
-
-  function getOpenCases() {
-    return new Promise((resolve, reject) => {
-      Request.find({status: Status.Open}).exec().then(function (openRequests) {
-        var openCases = ""
-        for (var request of openRequests) {
-          openCases += request.reqID + ","
-        }
-        return resolve(openCases.slice(0, openCases.length - 1))
-      }).catch(function (e) {
-        //Problem occurred while finding open cases.
-        reject(new QueryError(e))
-      })
-    })
-  }
 //====================================ACCEPTING REQUESTS===================================\\
   function validateClientIdentity() {
     return new Promise((resolve, reject) => {
       Medic.findOne({user: req.query.User}).populate("user").exec() //promise-like
         .then(function (medic) {
-          if (medic && req.session.case) {
+          if (medic && req.session.case && medic.available) {
             resolve(medic)
           } else {
             console.log("Here: "+ req.session.case)
@@ -281,25 +272,10 @@ router.get('/', function (req, res, next) {
         })
     })
   }
-  function createOpenCaseMessage(){
-    return new Promise((resolve,reject) => {
-      getOpenCases().then( function (openCaseIds) {
-        var casesMessage = ""
-        if (openCaseIds.length == 0) {
-          casesMessage = "There are no other cases currently open."
-        } else {
-          casesMessage = "These cases are still open: " + openCaseIds + "."
-        }
-        return resolve(casesMessage)
-      }).catch(function (e){
-        return reject(e);
-      })
-    })
-  }
 
   function notifyAllParties(request, medic) {
     //Respond back to accepting medic 
-    respond(responseData.MEDIC[4])
+    respond(responseData.MEDIC[4].replace("%PLACEHOLDER%",request.idInfo))
     //send dispatch notification to requester
     notifier.sendNotification(request.user.phone, responseData.HELP[3].replace("%PLACEHOLDER%", "#" + medic.medID))
 

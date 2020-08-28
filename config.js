@@ -25,8 +25,8 @@ cfg.twilioNumber = process.env.TWILIO_NUMBER;
 //My number used for testing purposes during development.
 cfg.myNumber = process.env.MY_NUMBER;
 cfg.MedicNumber = process.env.TWILIO_NUMBER_MEDIC || cfg.twilioNumber;
-// MongoDB connection string - MONGO_URL is for dev,
-cfg.mongoUrl = process.env.MONGO_URL; // default
+// MongoDB connection string - MONGO_URL is for establishing connection to DB
+cfg.mongoUrl = (cfg.useTestCredentials) ? process.env.MONGO_URL: process.env.MONGO_URL.replace("testDB", "prodDB")  ; // default
 
 // Export configuration object
 module.exports = cfg;

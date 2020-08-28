@@ -21,19 +21,25 @@ router.get('/', function(req, res, next) {
         //in continue convo:
         //Create new medic
         //send them welcome message from other number
-        findUser().then(user => util.saveDocument(user)).then( () => sendConfirmation())
+        isAMedic().then(isMedic => {
+            if(isMedic){
+                respond(responseData.ERROR[10])
+            }else{
+                findUser().then(user => util.saveDocument(user)).then( () => sendConfirmation())
+            }
+        })
+        
     }
 
     function continueConversation(){
-        if(requestBody.toUpperCase() === "YES"){
-            util.saveDocument(createMedic({user: req.query.User,available: true}))
-            .then(medic => {
-                respond(responseData.MEDIC[1])
-                notifier.sendMedicNotification(req.query.From,responseData.SIGNUP[0].replace("%PLACEHOLDER%",medic.medID) + responseData.SIGNUP[1])
-            })
-        }else{
-            respond(responseData.ERROR[7])
-        }
+        isAMedic().then(isMedic => {
+            if(isMedic){
+                respond(responseData.ERROR[10])
+            }else{
+                processAcceptance()
+            }
+        })
+        
     }
 
     function sendConfirmation(){
@@ -44,15 +50,59 @@ router.get('/', function(req, res, next) {
         return new Medic(properties)
     }
 
+    function processAcceptance(){
+        if(requestBody.toUpperCase() === "YES"){
+            updateUser().then(user => util.saveDocument(user))
+            .then((user) => util.saveDocument(createMedic({user: user.id,available: true})))
+            .then(medic => {
+                respond(responseData.MEDIC[1])
+                notifier.sendMedicNotification(req.query.From,responseData.SIGNUP[0].replace("%PLACEHOLDER%",medic.medID) + responseData.SIGNUP[1])
+            })
+        }else{
+            respond(responseData.ERROR[7])
+        }
+    }
+    function updateUser(){
+        return new Promise((resolve,reject) => {
+            User.findById(req.query.User).exec().then(function (user){
+                user.isMedic = true
+                return resolve(user)
+            })
+        })
+    }
+    function isAMedic(){
+        return new Promise((resolve,reject) => {
+            User.findOne({phone: req.query.From}).exec().then(function (user){
+                if(user){
+                    Medic.findOne({user: user.id}).exec().then(function (medic){
+                        if(medic){
+                            resolve(true)
+                        }else{
+                            resolve(false)
+                        }
+                    }).catch(function (e){
+                        console.log(e.stack)
+                        resolve(false)
+                    })
+                }else{
+                    resolve(false)
+                }
+            }).catch(function (e){
+                console.log(e.stack)
+                resolve(false)
+            })  
+        })
+    }
+
     function findUser(){
         return new Promise((resolve,reject) => {
             User.findOne({phone: req.query.From}).exec().then(function (user){
                 //if there is no user create one
+                console.log(req.query.From)
+                console.log(user)
                 if(!user){
-                    req.session.counter = 0
                     return resolve(new User({phone: req.query.From,isMedic: false, topic: Topic.SignUp}))
                 }else{
-                    req.session.counter = 0
                     user.topic = Topic.SignUp
                     return resolve(user)
                 }

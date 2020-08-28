@@ -10,6 +10,13 @@ const dayjs = require('dayjs');
 const responder = require("../util/responder.js")
 const notifier = require("../util/notifier.js")
 const util = require("../util/utilities.js")
+
+const Keyword = Object.freeze({
+  CANCEL: "CANCEL",
+  YES: "YES",
+  NO: "NO",
+  HELP_ME: "HELP ME"
+})
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   //Helper function to send a response via Twilio API
@@ -30,7 +37,8 @@ router.get('/', function(req, res, next) {
       }else{
         //This must be an existing person, so restart on new conversation topic. 
         resetUser(user)
-        util.saveDocument(user).then(function () {
+        .then((user) => util.saveDocument(user))
+        .then(function () {
           //end response by sending an initial message back to twilio to the user.
           respond(responseData.HELP[req.session.counter])
         }).catch(function (e){
@@ -61,11 +69,18 @@ router.get('/', function(req, res, next) {
   }
 
   function resetUser(user){
-    //Change topic and reset ResID for user
-    user.topic = Topic.Help
-    //user.resID = 0
-    req.session.counter = 0
-    console.log("Current value of session counter: " + req.session.counter)
+    return new Promise((resolve,reject) => {
+      //Change topic and reset ResID for user
+      user.topic = Topic.Help
+      //user.resID = 0
+      req.session.counter = 0
+      console.log("Current value of session counter: " + req.session.counter)
+      //delete past incomplete request if any
+      Request.deleteMany({user: user.id, status: Status.Incomplete}).exec().then(function (){
+        console.log("Deleted past request")
+      })
+      resolve(user)
+    })
   }
 
   function continueConversation(){
@@ -109,7 +124,8 @@ router.get('/', function(req, res, next) {
               respond(responseData.ERROR[4]) 
             })
             break;
-          case 3: respond(responseData.HELP[4])
+            //this is for completed/fulfilled/unfulfilled requests
+          case 3: respond(responseData.ERROR[0])
             break;
         }
       }else{
@@ -118,6 +134,66 @@ router.get('/', function(req, res, next) {
       }
     })
   }
+
+  function providePostRequestOptions(request){
+    var input = requestBody.toUpperCase()
+    if(input == Keyword.CANCEL){
+      cancelRequest(request)
+    }else if(input == Keyword.HELP_ME){
+      respond(responseData.ERROR[9])
+    }else{
+      if(request.status == Status.Accepted){
+        switch (input) {
+          //Special keywords to send updates
+          case Keyword.CANCEL:
+            cancelRequest(request)
+            break;
+          default:
+            respond(responseData.HELP[4])
+        }
+      }else{
+        respond(responseData.HELP[4])
+      }
+    }
+  }
+  function hasOpenRequest(){
+    return new Promise((resolve,reject) => {
+      Request.findOne({user: req.query.User,status: {$in:[Status.Open,Status.Accepted]}}).exec().then(function (request){
+        if(request){
+          return resolve(request)
+        }else{
+          return resolve(undefined)
+        }
+      }).catch(function (e) {
+          //console.log(e.stack)
+          return resolve(undefined)
+      })
+    })
+  }
+
+  function cancelRequest(request){
+    return new Promise((resolve,reject) => {
+      request.status = Status.Unfulfilled
+      respond(responseData.HELP[6])
+      util.saveDocument(request)
+      util.createOpenCaseMessage().then(function (caseMessage){
+        Medic.findOne({user: request.medic}).populate("user").exec().then(function (medic){
+          if(medic){
+            notifier.sendMedicNotification(medic.user.phone, responseData.HELP[7].replace("%OTHERPLACEHOLDER%",caseMessage))
+          }else{
+            //no medic assigned to this case yet
+          }
+        })
+        Medic.find({available: true}).populate("user").exec().then(function (medics){
+          for(var med of medics){
+            const message = responseData.MEDIC[9].replace("%PLACEHOLDER%", request.reqID).replace("%OTHERPLACEHOLDER%",caseMessage)
+            notifier.sendMedicNotification(med.user.phone,message)
+          }
+        })
+      }) 
+    })
+  }
+
   function updateHelpRequest(){
     //Right after medics are dispatched, save data
     Request.findById(req.session.request).exec().then(function (request){
@@ -177,12 +253,24 @@ router.get('/', function(req, res, next) {
   console.log("From: " + req.query.From)
   console.log("Body: " + requestBody)
   
-  if(req.query.isNew === "true"){ //strict equality
-    console.log("New conversation started")
-    newConversation()
-  }else{
-    continueConversation()
+  hasOpenRequest().then((hasOpenRequest) => {
+    console.log(hasOpenRequest)
+    if(hasOpenRequest){
+      providePostRequestOptions(hasOpenRequest)
+    }else{
+      processReply()
+    }
+  })
+
+  function processReply(){
+    if(req.query.isNew === "true"){ //strict equality
+      console.log("New conversation started")
+      newConversation()
+    }else{
+      continueConversation()
+    }
   }
+  
 });
 
 module.exports = router;
