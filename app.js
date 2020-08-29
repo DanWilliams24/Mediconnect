@@ -26,7 +26,7 @@ app.use(session({
   secret: cg.secret,
   store: new MongoStore({mongooseConnection:mongoose.connection}),
   resave: true,
-  saveUninitialized: true
+  saveUninitialized: false
 }));
 
 // uncomment after placing your favicon in /public

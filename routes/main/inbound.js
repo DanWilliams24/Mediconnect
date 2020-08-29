@@ -24,6 +24,9 @@ router.get('/', function (req, res, next) {
   console.log(isFromMedicNumber +" "+ (req.query.To == cg.MedicNumber) +": "+ req.query.To + "==" + cg.MedicNumber)
   const respond = (message) => responder(req,res).respond(message)
   const requestBody = util.sanitize(req.query.Body)
+  //console.log('Cookies: ', req.cookies)
+  // Cookies that have been signed
+  //console.log('Signed Cookies: ', req.signedCookies)
   var redirect;
   console.log(cg.useTestCredentials) 
   if(cg.useTestCredentials){

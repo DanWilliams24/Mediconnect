@@ -22,7 +22,7 @@ const {createOpenCaseMessage} = require('../util/utilities');
 
 
 const Keyword = Object.freeze({
-  CANCEL: "CANCEL",
+  CANCEL: "CANCEL CASE",
   OFFLINE: "OFFLINE",
   ONLINE: "ONLINE",
   YES: "YES",
@@ -61,9 +61,10 @@ router.get('/', function (req, res, next) {
         //make medic available again
         request.status = Status.Fulfilled
         medic.available = true
-        util.saveAllDocuments([request,medic])
-        createOpenCaseMessage().then(function (caseMessage){
-          respond(responseData.MEDIC[7] +" " + caseMessage + " To accept, reply 'ACCEPT (insert case number here)'")
+        util.saveAllDocuments([request,medic]).then(function (){
+          createOpenCaseMessage().then(function (caseMessage){
+            respond(responseData.MEDIC[7] +" " + caseMessage + " To accept, reply 'ACCEPT (insert case number here)'")
+          })
         })
         break;
       default: 
@@ -79,10 +80,13 @@ router.get('/', function (req, res, next) {
       request.status = Status.Open
       request.medic = undefined
       medic.available = true
-      createOpenCaseMessage().then(function (caseMessage){
-        respond(responseData.MEDIC[5] + " " + caseMessage + " To accept, reply 'ACCEPT (insert case number here)'")
+      util.saveAllDocuments([request,medic]).then(function () {
+        createOpenCaseMessage().then(function (caseMessage){
+          respond(responseData.MEDIC[5] + " " + caseMessage + " To accept, reply 'ACCEPT (insert case number here)'")
+        })
       })
-      util.saveAllDocuments([request,medic])
+      
+      
       notifier.sendNotification(request.user.phone, responseData.MEDIC[6])
       Medic.find({available: true}).populate("user").exec().then(function (medics){
         for(var med of medics){
@@ -161,7 +165,7 @@ router.get('/', function (req, res, next) {
       case Keyword.OFFLINE:
         Medic.findOne({
           user: req.query.User
-        }).then(function (medic) {
+        }).exec().then(function (medic) {
           medic.available = false
           medic.save().then(function () {
             console.log("Medic no longer online: " + medic.id)
@@ -177,9 +181,9 @@ router.get('/', function (req, res, next) {
       case Keyword.ONLINE:
         Medic.findOne({
           user: req.query.User
-        }).then(function (medic) {
+        }).exec().then(function (medic) {
           medic.available = true
-          medic.save().then(function () {
+          util.saveDocument(medic).then(function () {
             console.log("Medic is now online: " + medic.id)
             //availableMedic.log();
             createOpenCaseMessage().then(function (caseMessage){

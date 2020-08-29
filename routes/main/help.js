@@ -12,7 +12,7 @@ const notifier = require("../util/notifier.js")
 const util = require("../util/utilities.js")
 
 const Keyword = Object.freeze({
-  CANCEL: "CANCEL",
+  CANCEL: "CANCEL REQUEST",
   YES: "YES",
   NO: "NO",
   HELP_ME: "HELP ME"
@@ -36,10 +36,12 @@ router.get('/', function(req, res, next) {
         })
       }else{
         //This must be an existing person, so restart on new conversation topic. 
+        console.log("Existing user")
         resetUser(user)
         .then((user) => util.saveDocument(user))
         .then(function () {
           //end response by sending an initial message back to twilio to the user.
+          console.log("Send message back to user")
           respond(responseData.HELP[req.session.counter])
         }).catch(function (e){
           respond(responseData.ERROR[4]) //technical difficulties
@@ -158,15 +160,21 @@ router.get('/', function(req, res, next) {
   }
   function hasOpenRequest(){
     return new Promise((resolve,reject) => {
-      Request.findOne({user: req.query.User,status: {$in:[Status.Open,Status.Accepted]}}).exec().then(function (request){
-        if(request){
-          return resolve(request)
-        }else{
-          return resolve(undefined)
-        }
+      User.findOne({phone: req.query.From}).exec().then(function (user){
+        Request.findOne({user: user.id,status: {$in:[Status.Open,Status.Accepted]}}).exec().then(function (request){
+          console.log(request)
+          if(request){
+            return resolve(request)
+          }else{
+            return resolve(undefined)
+          }
+        }).catch(function (e) {
+            //console.log(e.stack)
+            return resolve(undefined)
+        })
       }).catch(function (e) {
-          //console.log(e.stack)
-          return resolve(undefined)
+        //console.log(e.stack)
+        return resolve(undefined)
       })
     })
   }
@@ -175,22 +183,23 @@ router.get('/', function(req, res, next) {
     return new Promise((resolve,reject) => {
       request.status = Status.Unfulfilled
       respond(responseData.HELP[6])
-      util.saveDocument(request)
-      util.createOpenCaseMessage().then(function (caseMessage){
-        Medic.findOne({user: request.medic}).populate("user").exec().then(function (medic){
-          if(medic){
-            notifier.sendMedicNotification(medic.user.phone, responseData.HELP[7].replace("%OTHERPLACEHOLDER%",caseMessage))
-          }else{
-            //no medic assigned to this case yet
-          }
-        })
-        Medic.find({available: true}).populate("user").exec().then(function (medics){
-          for(var med of medics){
-            const message = responseData.MEDIC[9].replace("%PLACEHOLDER%", request.reqID).replace("%OTHERPLACEHOLDER%",caseMessage)
-            notifier.sendMedicNotification(med.user.phone,message)
-          }
-        })
-      }) 
+      util.saveDocument(request).then(function (){
+        util.createOpenCaseMessage().then(function (caseMessage){
+          Medic.findOne({user: request.medic}).populate("user").exec().then(function (medic){
+            if(medic){
+              notifier.sendMedicNotification(medic.user.phone, responseData.HELP[7].replace("%OTHERPLACEHOLDER%",caseMessage))
+            }else{
+              //no medic assigned to this case yet
+            }
+          })
+          Medic.find({available: true}).populate("user").exec().then(function (medics){
+            for(var med of medics){
+              const message = responseData.MEDIC[9].replace("%PLACEHOLDER%", request.reqID).replace("%OTHERPLACEHOLDER%",caseMessage)
+              notifier.sendMedicNotification(med.user.phone,message)
+            }
+          })
+        }) 
+      })
     })
   }
 

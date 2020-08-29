@@ -4,7 +4,7 @@
     "Step 2/3: Great! Please type a short description of your location so that we can relay the information to the volunteer medics connected to mediconnect. Include street names and nearby landmarks for efficient identification. ",
     "Thanks! We're relaying this information to our volunteer medics. Once a medic accepts your call, you'll be notified.",
     "Medic %PLACEHOLDER% has accepted the call and is on the way. While you wait for the medic to arrive, you can text 'MEDIC' for information about medical and supply tents near you. We recommend that you ask by-standers if they have first-aid materials to start self-treating wounds or injuries before the medic arrives, as it may take a few minutes for them to find you. Text 'COVID' for reminders and information about how to stay safe while protesting during a pandemic.",
-    "We have distributed your request to all available medics. We will let you know ASAP once a medic becomes available. If you would like to withdraw your request, please text back 'CANCEL'.",
+    "We have distributed your request to all available medics. We will let you know ASAP once a medic becomes available. If you would like to withdraw your request, please text back 'CANCEL REQUEST'.",
     "Step 3/3: Thank you! Before we distribute your request, please provide a short description of your general appearance so a medic can identify you when they reach you. Include information like the clothes you are wearing for efficient identification.",
     "Your Request has been cancelled.",
     "Unfortunately, the individual cancelled the request. %OTHERPLACEHOLDER% Remember to stay alert for future injury notifications."
@@ -14,11 +14,11 @@
     "Thanks for responding. You will receive access to our medic callout system shortly through a different number. Remember to stay alert for future injury notifications!",
     "A medic has accepted case #%PLACEHOLDER%! %OTHERPLACEHOLDER% Remember to stay alert for future injury notifications.",
     "This is the location info: %PLACEHOLDER%. Are you sure you would like to take this case? Reply 'YES' to confirm or 'NO' to cancel.",
-    "Thanks for taking up the case! The requester has been notified that you're en-route. Heres how you can identify them when you get there: %PLACEHOLDER%. Injury notifications have been turned off. When you complete the case, reply 'COMPLETE'. If you must cancel, reply 'CANCEL'. ",
+    "Thanks for taking up the case! The requester has been notified that you're en-route. Heres how you can identify them when you get there: %PLACEHOLDER%. Injury notifications have been turned off. When you complete the case, reply 'COMPLETE'. If you must cancel, reply 'CANCEL CASE'. ",
     "You have cancelled the case. Injury notifications have been turned back on.",
-    "Unfortunately, the enroute medic cancelled the request. We have distributed your request to other medics. We will let you know ASAP once a medic becomes available. If you would like to withdraw your request, please text back 'CANCEL'",
+    "Unfortunately, the enroute medic cancelled the request. We have distributed your request to other medics. We will let you know ASAP once a medic becomes available. If you would like to withdraw your request, please text back 'CANCEL REQUEST'",
     "Thank you for responding and completing the case! Injury notifications have been turned back on.",
-    "When you complete the case, reply 'COMPLETE'. If you must cancel, reply 'CANCEL'.",
+    "When you complete the case, reply 'COMPLETE'. If you must cancel, reply 'CANCEL CASE'.",
     "Case #%PLACEHOLDER% is no longer available. %OTHERPLACEHOLDER% Remember to stay alert for future injury notifications."
 
 
@@ -38,7 +38,7 @@
     "In order to accept this case, you must finish or cancel your current case.",
     "To signup as a medic, please respond to this message with 'YES' to confirm your responsibilities.",
     "You are not currently registered as a medic. Please text (202)-972-4048 the phrase 'HELP ME' to get in contact with onsite medics or 'SIGNUP' to register as a onsite medic.",
-    "You can only put in one help request at a time. If you would like to withdraw your current request, please text back 'CANCEL'.",
+    "You can only put in one help request at a time. If you would like to withdraw your current request, please text back ' CANCEL REQUEST'.",
     "You have already signed up as a medic. Please text 'HELP ME' to get in contact with onsite medics or 'COVID' for reminders and info on how to stay safe while protesting during a pandemic."
   ],
   "SUPPLY": [
