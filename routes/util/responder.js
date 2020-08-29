@@ -18,11 +18,13 @@ module.exports = function (req,res) {
                 console.log(twiml.toString())
                 res.writeHead(200, {'Content-Type': 'text/xml'});
                 res.end(twiml.toString());
-                if(req.query.To == config.MedicNumber){
-                    notifier.sendMedicNotification(req.query.From,messageParts[1])
-                }else{
-                    notifier.sendNotification(req.query.From,messageParts[1])
-                }
+                res.on('end', () => {
+                    if(req.query.To == config.MedicNumber){
+                        notifier.sendMedicNotification(req.query.From,messageParts[1])
+                    }else{
+                        notifier.sendNotification(req.query.From,messageParts[1])
+                    }
+                })
             }else{
                 if(message){
                     twiml.message(message);
