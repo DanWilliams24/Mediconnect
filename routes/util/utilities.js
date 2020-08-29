@@ -20,7 +20,7 @@ function saveAllDocuments(docs){
         doc.save()
       }
 
-      return resolve()
+      return resolve(docs)
     }catch(e){
       return reject(new Error("Problem occurred during document saving process."))
     }
@@ -66,10 +66,21 @@ function sanitize (str) {
   return GsmCharsetUtils.removeNonGsmChars(str.replace( '<', '').replace( '>', ''));
 }
 
+function splitMessage(message){
+  let sentenceParts = message.match(/[\w|\)][.?!](\s|$)/g)
+  let sentenceCount = message.match(/[\w|\)][.?!](\s|$)/g).length
+  //console.log(sentenceParts)
+  let breakpoint = Math.ceil(sentenceCount/2)-1
+  let partA = message.substring(0,message.indexOf(sentenceParts[breakpoint])+2)
+  let partB = message.substring(message.indexOf(sentenceParts[breakpoint])+2,message.length)
+  return [partA,partB]
+} 
+
 module.exports = {
   saveDocument,
   saveAllDocuments,
   getOpenCases,
   createOpenCaseMessage,
-  sanitize
+  sanitize,
+  splitMessage
 }

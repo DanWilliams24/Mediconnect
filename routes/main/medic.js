@@ -141,8 +141,9 @@ router.get('/', function (req, res, next) {
         //Find relevant request
         validateClientIdentity()
           .then(medic => confirmRequest(medic))
-          .then(({request,medic}) => notifyAllParties(request, medic))
-          .then(docs => util.saveAllDocuments(docs))
+          .then(({request,medic}) => util.saveAllDocuments([request,medic]))
+          .then(docs => notifyAllParties(docs[0], docs[1]))
+          
           .catch(function (e) {
             if(e instanceof ImpossibleError){
               //Request used to exist in DB but was deleted. Inform user
@@ -167,7 +168,7 @@ router.get('/', function (req, res, next) {
           user: req.query.User
         }).exec().then(function (medic) {
           medic.available = false
-          medic.save().then(function () {
+          util.saveDocument(medic).then(function () {
             console.log("Medic no longer online: " + medic.id)
             //unavailableMedic.log();
             respond("")
