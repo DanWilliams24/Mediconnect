@@ -14,17 +14,18 @@ module.exports = function (req,res) {
             const twiml = new MessagingResponse();
             if(gsmTextMessage.msgCount >= 3 && !config.useTestCredentials){
                 let messageParts = utilities.splitMessage(message)
-                twiml.message(messageParts[0]);
-                console.log(twiml.toString())
-                res.writeHead(200, {'Content-Type': 'text/xml'});
-                res.end(twiml.toString());
-                res.on('end', () => {
+                try {
+                    twiml.message(messageParts[0]);
+                    console.log(twiml.toString())
+                    res.writeHead(200, {'Content-Type': 'text/xml'});
+                    res.end(twiml.toString());
+                } finally {
                     if(req.query.To == config.MedicNumber){
                         notifier.sendMedicNotification(req.query.From,messageParts[1])
                     }else{
                         notifier.sendNotification(req.query.From,messageParts[1])
                     }
-                })
+                }
             }else{
                 if(message){
                     twiml.message(message);
