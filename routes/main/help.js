@@ -147,7 +147,7 @@ router.get('/', function(req, res, next) {
       if(request.status == Status.Accepted){
         switch (input) {
           //Special keywords to send updates
-          case Keyword.CANCEL:
+          case Keyword.CANCEL: //may be useless
             cancelRequest(request)
             break;
           default:
@@ -158,7 +158,7 @@ router.get('/', function(req, res, next) {
       }
     }
   }
-  function hasOpenRequest(){
+  function hasNonFulfilledRequest(){
     return new Promise((resolve,reject) => {
       User.findOne({phone: req.query.From}).exec().then(function (user){
         Request.findOne({user: user.id,status: {$in:[Status.Open,Status.Accepted]}}).exec().then(function (request){
@@ -262,10 +262,10 @@ router.get('/', function(req, res, next) {
   console.log("From: " + req.query.From)
   console.log("Body: " + requestBody)
   
-  hasOpenRequest().then((hasOpenRequest) => {
-    console.log(hasOpenRequest)
-    if(hasOpenRequest){
-      providePostRequestOptions(hasOpenRequest)
+  hasNonFulfilledRequest().then((hasRequest) => {
+    console.log(hasRequest)
+    if(hasRequest){
+      providePostRequestOptions(hasRequest)
     }else{
       processReply()
     }

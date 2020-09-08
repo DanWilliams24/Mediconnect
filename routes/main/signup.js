@@ -66,6 +66,7 @@ router.get('/', function(req, res, next) {
         return new Promise((resolve,reject) => {
             User.findById(req.query.User).exec().then(function (user){
                 user.isMedic = true
+                user.Topic = req.session.pastTopic
                 return resolve(user)
             })
         })
@@ -103,6 +104,7 @@ router.get('/', function(req, res, next) {
                 if(!user){
                     return resolve(new User({phone: req.query.From,isMedic: false, topic: Topic.SignUp}))
                 }else{
+                    req.session.pastTopic = user.Topic
                     user.topic = Topic.SignUp
                     return resolve(user)
                 }
