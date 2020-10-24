@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const cg = require('../../config')
 const User = require('../../models/user-schema')
+const SignUpCode = require('../../models/signup-code-schema')
 const Medic = require('../../models/medic-schema')
 const responseData = require('../util/responses.json');
 const Request = require('../../models/request-schema');
@@ -9,13 +10,24 @@ const { Status } = require('../../models/request-schema');
 const { Topic } = require('../../models/user-schema');
 const responder = require("../util/responder.js")
 const util = require("../util/utilities.js")
-const notifier = require("../util/notifier.js")
+const notifier = require("../util/notifier.js");
+const { response } = require('../../app');
 router.get('/', function(req, res, next) {
     //Helper function to send a response via Twilio API
     const respond = (message) => responder(req,res).respond(message)
     const requestBody = util.sanitize(req.query.Body)
+
+    if(req.query.isNew === "true"){ //strict equality
+        console.log("New conversation started")
+        newConversation()
+    }else{
+        continueConversation()
+    }
+
     function newConversation(){
         //Check if user is already in db if not create and save them
+        //check for user provided signup code
+        //if provided and matches active signup key in database
         //have them confirm responsibilities
         //wait for response
         //in continue convo:
@@ -25,7 +37,7 @@ router.get('/', function(req, res, next) {
             if(isMedic){
                 respond(responseData.ERROR[10])
             }else{
-                findUser().then(user => util.saveDocument(user)).then( () => sendConfirmation())
+                findUser().then(user => util.saveDocument(user)).then( () => askForCode())
             }
         })
         
@@ -36,13 +48,49 @@ router.get('/', function(req, res, next) {
             if(isMedic){
                 respond(responseData.ERROR[10])
             }else{
-                processAcceptance()
+                switch(req.session.signup){
+                    case 1://checking code provided by user
+                        getValidCodes().then(codes => {
+                            codeFound = false
+                            for(var codeDict in codes){
+                                if(codeDict.code === requestBody.toUpperCase()){
+                                    codeFound = true
+                                }
+                            } 
+                            if(codeFound){
+                                sendConfirmation()
+                            }else{
+                                respond(responseData.ERROR[3])
+                            }
+                        })
+                        break;
+                    case 2://checking responsibility acceptance from user
+                        processAcceptance()
+                        break;
+                    default: respond(responseData.ERROR[4]) //should not occur unless there is issue with sessions
+                }
+                
             }
         })
         
     }
+    function getValidCodes(){
+        return new Promise((resolve,reject) => {
+            SignUpCode.find({active: true}).exec().then(function (codes) {
+                return resolve(codes)
+            })
+        }).catch(function (e){
+            console.log(e.stack)
+            return resolve([])
+        })
+    }
+    function askForCode(){
+        req.session.signup = 1
+        respond(responseData.SIGNUP[3])
+    }
 
     function sendConfirmation(){
+        req.session.signup = 2
         respond(responseData.SIGNUP[2])
     }
 
@@ -114,15 +162,6 @@ router.get('/', function(req, res, next) {
             })
         })
         
-    }
-
-
-
-    if(req.query.isNew === "true"){ //strict equality
-        console.log("New conversation started")
-        newConversation()
-    }else{
-        continueConversation()
     }
 })
 
