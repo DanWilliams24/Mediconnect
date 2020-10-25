@@ -91,7 +91,7 @@ router.get('/', function(req, res, next) {
     function processAcceptance(){
         if(requestBody.toUpperCase() === "YES"){
             updateUser().then(user => util.saveDocument(user))
-            .then((user) => util.saveDocument(createMedic({user: user.id,available: true})))
+            .then((user) => util.saveDocument(createMedic({user: user.id,available: false})))
             .then(medic => {
                 respond(responseData.MEDIC[1])
                 notifier.sendMedicNotification(req.query.From,responseData.SIGNUP[0].replace("%PLACEHOLDER%",medic.medID) + " " +responseData.SIGNUP[1])

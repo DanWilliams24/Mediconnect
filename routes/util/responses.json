@@ -24,7 +24,7 @@
 
   ],
   "SIGNUP": [
-    "Thanks for signing up Medic #%PLACEHOLDER%! Remember to stay alert for future injury notifications. When a request comes in you and all other medics will be notified and given a chance to accept. The first medic that does, gets assigned the case.",
+    "Thanks for signing up Medic #%PLACEHOLDER%! Remember to stay alert for future injury notifications. When a request comes in you and all other medics will be notified and given a chance to accept. The first medic that does, gets assigned the case. You are currently offline. Type 'ONLINE' to become available for requests.",
     "To stop injury notifications type 'OFFLINE'. You can turn notifications back on with 'ONLINE'",
     "As a medic for FFDC and mediconnect, you have a responsibility to help injured protestors to the best of your ability. On-site medics are not a substitute for emergency medical services. If your protestor is in critical condition, it is important that you contact the appropriate authorities and remember that your primary responsibility is to make sure injured protestors are safely treated. Please reply 'YES' if you agree to these terms.",
     "Thanks for your interest in being a medic! In order to signup, you must have a signup code provided by Freedom Fighters DC. Please reply with a valid signup code to continue. The form is: !PASSWORD"
