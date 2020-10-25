@@ -192,7 +192,7 @@ router.get('/', function(req, res, next) {
               //no medic assigned to this case yet
             }
           })
-          Medic.find({available: true}).populate("user").exec().then(function (medics){
+          util.getAvailableMedics().then(function (medics){
             for(var med of medics){
               const message = responseData.MEDIC[9].replace("%PLACEHOLDER%", request.reqID).replace("%OTHERPLACEHOLDER%",caseMessage)
               notifier.sendMedicNotification(med.user.phone,message)
@@ -241,7 +241,7 @@ router.get('/', function(req, res, next) {
     //2. Search for available medics
     //3. Use response.json to send back the appropriate message
     //4. Send request to all available medics
-    Medic.find({available: true}).populate("user").exec().then(function (medics){
+    Medic.find({}).populate("user").exec().then(function (medics){
       if(medics.length !== 0){
         respond(responseData.HELP[2])
         for(var medic of medics){

@@ -50,8 +50,8 @@ router.get('/', function(req, res, next) {
             }else{
                 switch(req.session.signup){
                     case 1://checking code provided by user
-                        getValidCodes().then(codes => {
-                            codeFound = false
+                        util.getValidCodes().then(codes => {
+                            var codeFound = false
                             for(var codeDict in codes){
                                 if(codeDict.code === requestBody.toUpperCase()){
                                     codeFound = true
@@ -73,16 +73,6 @@ router.get('/', function(req, res, next) {
             }
         })
         
-    }
-    function getValidCodes(){
-        return new Promise((resolve,reject) => {
-            SignUpCode.find({active: true}).exec().then(function (codes) {
-                return resolve(codes)
-            })
-        }).catch(function (e){
-            console.log(e.stack)
-            return resolve([])
-        })
     }
     function askForCode(){
         req.session.signup = 1
