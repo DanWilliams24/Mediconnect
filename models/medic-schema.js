@@ -11,6 +11,7 @@ const MedicSchema = new mongoose.Schema({
         ref: 'Request'
     }],
     medID: Number,
+    signupCode: String //This is the code the medic used to signup
 
 })
 autoIncrement.initialize(mongoose.connection);

@@ -18,7 +18,7 @@ const {
 const responder = require("../util/responder.js");
 const LogicError = require('../error/logic-error');
 const util = require('../util/utilities');
-const {createOpenCaseMessage} = require('../util/utilities');
+const {createOpenCaseMessage, getAvailableMedics} = require('../util/utilities');
 
 
 const Keyword = Object.freeze({
@@ -88,7 +88,7 @@ router.get('/', function (req, res, next) {
       
       
       notifier.sendNotification(request.user.phone, responseData.MEDIC[6])
-      Medic.find({available: true}).populate("user").exec().then(function (medics){
+      getAvailableMedics().then(function (medics){
         for(var med of medics){
           const message = responseData.MEDIC[0].replace("%PLACEHOLDER%", request.location).replace("%IDPLACEHOLDER%",request.reqID)
           notifier.sendMedicNotification(med.user.phone,message)
@@ -286,7 +286,7 @@ router.get('/', function (req, res, next) {
 
     return new Promise((resolve, reject) => {
       //Broadcast request as accepted to all other relevant medics
-      Medic.find({available: true}).populate("user").exec().then(function (medics) {
+      getAvailableMedics().then(function (medics) {
         if (medics.length === 0) return reject(new Error("There are no medics currently available to notify about this update"))
         createOpenCaseMessage().then(function (casesMessage){
           for (var medic of medics) {
