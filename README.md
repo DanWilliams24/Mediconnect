@@ -5,6 +5,8 @@
            | |  | |  __/ (_| | | (_| (_) | | | | | | |  __/ (__| |_ 
            |_|  |_|\___|\__,_|_|\___\___/|_| |_|_| |_|\___|\___|\__|
                                                                     
+![](https://i.imgur.com/Mj1JhTq.jpg)
+
 # Motivation
 In 2020, during the height of the Black Lives Matter protests, I began working on ‘Mediconnect’, one of the most interesting and impactful projects I have ever worked on. Mediconnect is an SMS text-based bot that I built in order to connect injured protesters to medical help during peaceful protests.
 Mediconnect functions as a dispatch system, connecting medics on-site at Black Lives Matter protests to injured protestors quickly and efficiently. Injured protesters can text ‘HELP’ to the textline, and medics connected to the chatbot are notified of the injury. 
